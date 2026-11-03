@@ -28,8 +28,9 @@
     });
   }
   async function busy(btn, work) {
-    const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
-    try { return await work(); } finally { btn.disabled = false; btn.innerHTML = old; }
+    const old = btn.innerHTML, w = btn.offsetWidth; btn.style.minWidth = w + 'px'; btn.disabled = true; btn.setAttribute('aria-busy', 'true');
+    btn.innerHTML = '<span class="spin" role="status" aria-label="กำลังดำเนินการ"></span>';
+    try { return await work(); } finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.style.minWidth = ''; btn.innerHTML = old; }
   }
 
   $('#brand').textContent = BOOT.title + ' · ' + BOOT.term;
@@ -50,7 +51,7 @@
         <h1>ตรวจสอบ<span class="em">ชั่วโมง${oval}</span> TA<br>ของคุณ</h1>
         <p class="lead">เข้าสู่ระบบด้วยอีเมล @cmu.ac.th เราจะส่งรหัส OTP ไปให้</p>
         <form class="form" id="f" novalidate>
-          <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="อีเมลมหาวิทยาลัย" required>
+          <input id="email" type="email" aria-label="อีเมลมหาวิทยาลัย" inputmode="email" autocomplete="email" placeholder="อีเมลมหาวิทยาลัย" required>
           <button class="pill pill-primary" type="submit">รับรหัส OTP</button>
           <div class="err" id="err" role="alert">${esc(note || '')}</div>
         </form>
@@ -70,7 +71,7 @@
         <h1>กรอก<span class="em">รหัส${oval}</span> OTP</h1>
         <p class="lead">หากอีเมล <b>${esc(email)}</b> อยู่ในระบบ เราได้ส่งรหัส 6 หลักไปแล้ว (ใช้ได้ ${BOOT.otpMin} นาที) ตรวจสอบกล่องจดหมายและจดหมายขยะ หากไม่ได้รับ โปรดติดต่อเจ้าหน้าที่</p>
         <form class="form" id="f" novalidate>
-          <input id="code" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
+          <input id="code" class="otp" aria-label="รหัส OTP 6 หลัก" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
           <button class="pill pill-primary" type="submit">ยืนยันรหัส</button>
           <div class="err" id="err" role="alert"></div>
           <button class="linkbtn hint" type="button" id="back">ใช้อีเมลอื่น / ขอรหัสใหม่</button>
@@ -111,7 +112,7 @@
             <button class="pill pill-outline" id="no" type="button">ไม่ถูกต้อง รายงาน</button>
           </div>
           <div class="report" id="rep" hidden>
-            <textarea id="detail" maxlength="1000" placeholder="บอกเจ้าหน้าที่ว่าไม่ถูกต้องตรงไหน เช่น รอบที่ 2 ควรเป็น 50 ชั่วโมง"></textarea>
+            <textarea id="detail" maxlength="1000" aria-label="รายละเอียดที่ไม่ถูกต้อง" placeholder="บอกเจ้าหน้าที่ว่าไม่ถูกต้องตรงไหน เช่น รอบที่ 2 ควรเป็น 50 ชั่วโมง"></textarea>
             <div class="count"><span id="n">0</span>/1000</div>
             <div class="err" id="err" role="alert" style="color:var(--destructive)"></div>
             <div class="actions">
@@ -163,47 +164,65 @@
 
   const LABEL = { confirmed: 'ยืนยันแล้ว', reported: 'รายงาน', pending: 'ยังไม่ตอบ' };
 
+  // The shell (search box, chips) is built once so typing, IME composition and focus survive
+  // the 60s poll; only the banner, tiles and rows are repainted.
   function drawDash() {
     if (!dash) return;
+    if (!$('#rows')) buildShell();
+    paintDash();
+  }
+
+  function buildShell() {
+    app.innerHTML = `
+      <div id="banner"></div>
+      <div class="tiles" id="tiles"></div>
+      <div class="card">
+        <div class="tools">
+          <input id="q" type="search" aria-label="ค้นหาชื่อหรือรหัส" placeholder="ค้นหาชื่อหรือรหัส" value="${esc(query)}">
+          <div class="chips">${[['all', 'ทั้งหมด'], ['reported', 'รายงาน'], ['pending', 'ยังไม่ตอบ'], ['confirmed', 'ยืนยันแล้ว']]
+            .map(([k, l]) => `<button class="chip" data-f="${k}" type="button">${l}</button>`).join('')}</div>
+        </div>
+        <div id="rows"></div>
+      </div>`;
+    $('#q').oninput = e => { query = e.target.value; paintRows(); };
+    app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; paintDash(); });
+  }
+
+  function paintDash() {
     const c = dash.counts;
     document.title = (c.newReports ? '(' + c.newReports + ') ' : '') + BOOT.title;
+    $('#banner').innerHTML = c.newReports ? `<div class="banner" role="alert"><span>มีนักศึกษารายงาน ${c.newReports} รายการที่ยังไม่รับทราบ</span>
+        <button class="pill pill-light small" id="showRep" type="button">ดูรายการ</button></div>` : '';
+    const sr = $('#showRep'); if (sr) sr.onclick = () => { filter = 'reported'; paintDash(); };
+    $('#tiles').innerHTML = `
+        <div class="tile"><div class="v">${c.confirmed}<span style="font-size:16px;color:var(--ink2)"> / ${c.all}</span></div><div class="k">ยืนยันแล้ว</div></div>
+        <div class="tile"><div class="v" style="color:${c.reported ? 'var(--destructive)' : 'inherit'}">${c.reported}</div><div class="k">รายงานไม่ถูกต้อง</div></div>
+        <div class="tile"><div class="v">${c.pending}</div><div class="k">ยังไม่ตอบ</div></div>`;
+    app.querySelectorAll('[data-f]').forEach(b => b.setAttribute('aria-pressed', String(filter === b.dataset.f)));
+    paintRows();
+  }
+
+  function paintRows() {
     const q = query.trim().toLowerCase();
     const list = dash.students.filter(s => (filter === 'all' || s.status === filter) &&
       (!q || s.name.toLowerCase().includes(q) || s.id.includes(q)));
     const rc = dash.rounds.length;
     const hv = (s, round) => { const h = s.hours.find(x => x.round === round); return h ? fmt(h.hours) : '–'; };
-    app.innerHTML = `
-      ${c.newReports ? `<div class="banner" role="alert"><span>มีนักศึกษารายงาน ${c.newReports} รายการที่ยังไม่รับทราบ</span>
-        <button class="pill pill-light small" id="showRep" type="button">ดูรายการ</button></div>` : ''}
-      <div class="tiles">
-        <div class="tile"><div class="v">${c.confirmed}<span style="font-size:16px;color:var(--ink2)"> / ${c.all}</span></div><div class="k">ยืนยันแล้ว</div></div>
-        <div class="tile"><div class="v" style="color:${c.reported ? 'var(--destructive)' : 'inherit'}">${c.reported}</div><div class="k">รายงานไม่ถูกต้อง</div></div>
-        <div class="tile"><div class="v">${c.pending}</div><div class="k">ยังไม่ตอบ</div></div>
-      </div>
-      <div class="card">
-        <div class="tools">
-          <input id="q" type="search" placeholder="ค้นหาชื่อหรือรหัส" value="${esc(query)}">
-          <div class="chips">${[['all', 'ทั้งหมด'], ['reported', 'รายงาน'], ['pending', 'ยังไม่ตอบ'], ['confirmed', 'ยืนยันแล้ว']]
-            .map(([k, l]) => `<button class="chip" data-f="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}</div>
-        </div>
+    $('#rows').innerHTML = `
         <div class="row head" style="--rc:${rc}"><span>ชื่อ</span>${dash.rounds.map(r => `<span class="num">รอบ ${r}</span>`).join('')}<span class="num">รวม</span><span>สถานะ</span></div>
         ${list.length ? list.map(s => `
           <div class="row" style="--rc:${rc}">
             <div class="nm"><b>${esc(s.name)}</b><span>${esc(s.id)}</span></div>
             ${dash.rounds.map(r => `<span class="num"><span class="h">รอบ ${r}: </span>${hv(s, r)}</span>`).join('')}
-            <span class="num"><b>${fmt(s.total)}</b></span>
+            <span class="num"><span class="h">รวม: </span><b>${fmt(s.total)}</b></span>
             <span><span class="badge b-${s.status}">${LABEL[s.status]}</span>${s.stale ? ' <span class="badge b-stale">ชม.เปลี่ยน</span>' : ''}
               ${s.at ? `<br><small style="color:var(--ink2)">${esc(when(s.at))}</small>` : ''}</span>
             ${s.status === 'reported' ? `<div class="detail"><p>${esc(s.detail)}</p>
               ${s.acked ? '<small style="color:var(--ink2)">รับทราบแล้ว</small>' : `<button class="pill pill-primary small" data-ack="${esc(s.responseId)}" type="button">รับทราบ</button>`}</div>` : ''}
-          </div>`).join('') : '<p class="empty">ไม่พบรายการ</p>'}
-      </div>`;
-    const sr = $('#showRep'); if (sr) sr.onclick = () => { filter = 'reported'; drawDash(); };
-    const qi = $('#q'); qi.oninput = e => { query = e.target.value; const p = e.target.selectionStart; drawDash(); const n = $('#q'); n.focus(); n.setSelectionRange(p, p); };
-    app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; drawDash(); });
+          </div>`).join('') : '<p class="empty">ไม่พบรายการ</p>'}`;
     app.querySelectorAll('[data-ack]').forEach(b => b.onclick = () => busy(b, async () => {
       const r = await api('apiAck', token, b.dataset.ack);
-      if (r.ok) { dash = r.data; drawDash(); }
+      if (r.ok) { dash = r.data; paintDash(); }
     }));
   }
 
