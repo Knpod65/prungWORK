@@ -43,8 +43,15 @@ function setup() {
 function authorizeMailSend() {
   resetCaches_();
   const me = Session.getEffectiveUser().getEmail();
-  sendMail_(me, 'TA Hours: ทดสอบการส่งอีเมล', 'อีเมลนี้ยืนยันว่าระบบส่งจาก ' + (cfg_().MAIL_FROM || me) + ' ได้ ลบฟังก์ชันนี้ทิ้งได้หลังทดสอบผ่าน');
-  log_('OK: test mail sent to ' + me + ' (from ' + (cfg_().MAIL_FROM || me) + ')');
+  const from = cfg_().MAIL_FROM;
+  if (from) {
+    const aliases = GmailApp.getAliases();
+    log_(aliases.indexOf(from) >= 0
+      ? 'Alias OK: ' + from + ' is a verified Send-as address.'
+      : 'WARNING: ' + from + ' is NOT a verified Send-as alias of ' + me + ' (aliases: ' + (aliases.join(', ') || 'none') + '). Mail will go out from ' + me + ' until you add it in Gmail > Settings > Accounts.');
+  }
+  sendMail_(me, 'TA Hours: ทดสอบการส่งอีเมล', 'อีเมลนี้ยืนยันว่าระบบส่งได้ ผู้ส่งที่ควรเห็นคือ ' + (from || me) + ' ลบฟังก์ชันนี้ทิ้งได้หลังทดสอบผ่าน');
+  log_('OK: test mail sent to ' + me + ' (from ' + (from || me) + ')');
 }
 
 /** Turn any term that Sheets auto-converted to a date back into text ("1/2569"). Idempotent. */
