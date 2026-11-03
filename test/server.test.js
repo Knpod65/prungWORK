@@ -152,3 +152,15 @@ test('mail quota exhausted: clear error, no mail, same for known and unknown ema
   e.env.quota = 50;
   assert.ok(e.run('apiRequestOtp("kamol@cmu.ac.th")').ok);
 });
+
+test('otp email: html carries the code, escapes config text, plain-text fallback kept', () => {
+  const e = fresh();
+  e.run('rows_("Config")'); // ensure sheet loaded
+  e.run('append_("Config", {key:"TITLE", value:"<b>ตรวจ</b> & ชม."})'); e.run('resetCaches_()');
+  e.run('apiRequestOtp("kamol@cmu.ac.th")');
+  const m = e.mails.at(-1);
+  const code = /(\d{6})/.exec(m.body)[1];
+  assert.ok(m.htmlBody.includes(code));
+  assert.ok(m.htmlBody.includes('&lt;b&gt;ตรวจ&lt;/b&gt; &amp; ชม.') && !m.htmlBody.includes('<b>ตรวจ'));
+  assert.ok(!/<style|<script|<img/i.test(m.htmlBody));
+});
