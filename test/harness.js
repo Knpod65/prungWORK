@@ -2,7 +2,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm'), crypto = require('crypto');
 
 function makeEnv() {
-  const props = {}, cache = {}, mails = [], book = {};
+  const props = {}, cache = {}, mails = [], book = {}, env = {};
   const sheet = name => ({
     name, data: [],
     getDataRange() { return { getValues: () => this.data.map(r => r.slice()) }; },
@@ -28,7 +28,7 @@ function makeEnv() {
       put: (k, v, ttl) => { cache[k] = { v, exp: Date.now() + ttl * 1000 }; },
       remove: k => { delete cache[k]; } }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
-    MailApp: { sendEmail: m => mails.push(m) },
+    MailApp: { sendEmail: m => mails.push(m), getRemainingDailyQuota: () => (env.quota === undefined ? 100 : env.quota) },
     ScriptApp: { getService: () => ({ getUrl: () => 'https://example.test/exec' }) },
     SpreadsheetApp: { flush() {}, openById: () => ({
       getSheetByName: n => book[n] || null,
@@ -49,7 +49,7 @@ function makeEnv() {
     vm.runInContext(fs.readFileSync(path.join(dir, f), 'utf8'), ctx, { filename: f });
   }
   const run = code => vm.runInContext(code, ctx);
-  return { ctx, run, props, cache, mails, book, sheet,
+  return { env, ctx, run, props, cache, mails, book, sheet,
     paste(tab, rows) { const s = book[tab] || (book[tab] = sheet(tab)); s.data = rows.map(r => r.slice()); } };
 }
 module.exports = { makeEnv };

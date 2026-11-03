@@ -142,3 +142,13 @@ test('term auto-converted to a date by Sheets still works, and setup() repairs i
   assert.strictEqual(e.book.Config.data.find(r => r[0] === 'TERM')[1], '1/2569');
   assert.ok(e.book.Hours.data.slice(1).every(r => r[0] === '1/2569'));
 });
+
+test('mail quota exhausted: clear error, no mail, same for known and unknown emails', () => {
+  const e = fresh();
+  e.env.quota = 0;
+  assert.strictEqual(e.run('apiRequestOtp("kamol@cmu.ac.th")').code, 'MAIL_QUOTA');
+  assert.strictEqual(e.run('apiRequestOtp("nobody@cmu.ac.th")').code, 'MAIL_QUOTA');
+  assert.strictEqual(e.mails.length, 0);
+  e.env.quota = 50;
+  assert.ok(e.run('apiRequestOtp("kamol@cmu.ac.th")').ok);
+});

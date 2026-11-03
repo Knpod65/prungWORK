@@ -49,6 +49,9 @@ function requestOtp_(raw) {
   const c = cfg_();
   const cache = CacheService.getScriptCache();
   if (cache.get('cool:' + email)) fail_('COOLDOWN');
+  // Checked before the user lookup so it reveals nothing about who is registered.
+  // Consumer Gmail allows ~100 mails/day, Workspace ~1500.
+  if (MailApp.getRemainingDailyQuota() < 2) fail_('MAIL_QUOTA');
   cache.put('cool:' + email, '1', c.OTP_RESEND_SEC);
 
   const user = findUser_(email);
