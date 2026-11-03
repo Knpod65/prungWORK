@@ -16,6 +16,8 @@
   const fmt = n => Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 });
   const when = iso => iso ? new Date(iso).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }) : '';
   const msg = c => MSG[c] || MSG.ERROR;
+  const live = $('#live');
+  const announce = t => { live.textContent = ''; setTimeout(() => { live.textContent = t; }, 50); };
 
   let token = null;
   try { token = sessionStorage.getItem('ta_token'); } catch (e) {}
@@ -141,7 +143,7 @@
   }
 
   // ---- student -----------------------------------------------------------
-  function renderStudent(me) {
+  function renderStudent(me, focusStatus) {
     const s = me.student;
     if (!s || !s.hours.length) {
       app.innerHTML = `<div class="card"><p class="who-name">${esc(me.name)}</p><p class="empty">${esc(msg('NO_HOURS'))}</p></div>`;
@@ -159,7 +161,7 @@
         </div>
         ${r ? statusBlock(r) : ''}
         <div id="ask" ${r && !r.stale ? 'hidden' : ''}>
-          <p class="q">ชั่วโมงรวม ${fmt(s.total)} ชั่วโมง ถูกต้องหรือไม่</p>
+          <p class="q" id="q1" tabindex="-1">ชั่วโมงรวม ${fmt(s.total)} ชั่วโมง ถูกต้องหรือไม่</p>
           <div class="actions">
             <button class="pill pill-primary" id="yes" type="button">ถูกต้อง ยืนยัน</button>
             <button class="pill pill-outline" id="no" type="button">ไม่ถูกต้อง รายงาน</button>
@@ -167,7 +169,7 @@
           <div class="report" id="rep" hidden>
             <textarea id="detail" maxlength="1000" aria-label="รายละเอียดที่ไม่ถูกต้อง" placeholder="บอกเจ้าหน้าที่ว่าไม่ถูกต้องตรงไหน เช่น รอบที่ 2 ควรเป็น 50 ชั่วโมง"></textarea>
             <div class="count"><span id="n">0</span>/1000</div>
-            <div class="err" id="err" role="alert" style="color:var(--destructive)"></div>
+            <div class="err err-card" id="err" role="alert"></div>
             <div class="actions">
               <button class="pill pill-danger" id="send" type="button">ส่งรายงาน</button>
               <button class="pill pill-outline" id="cancel" type="button">ยกเลิก</button>
@@ -177,26 +179,27 @@
       </div>`;
     const submit = (btn, status, detail) => busy(btn, async () => {
       const res = await api('apiSubmit', token, status, detail);
-      if (res.ok) { me.student = res.data; renderStudent(me); }
+      if (res.ok) { me.student = res.data; renderStudent(me, true); announce(status === 'confirmed' ? 'บันทึกการยืนยันชั่วโมงแล้ว' : 'ส่งรายงานถึงเจ้าหน้าที่แล้ว'); }
       else if (res.code === 'AUTH') { saveToken(null); setWho(null); renderEmail(msg('AUTH')); }
       else { const e = $('#err'); $('#rep').hidden = false; e.textContent = msg(res.code); }
     });
     const ask = $('#ask');
     $('#yes').onclick = e => submit(e.currentTarget, 'confirmed', '');
     $('#no').onclick = () => { $('#rep').hidden = false; $('#detail').focus(); };
-    $('#cancel').onclick = () => { $('#rep').hidden = true; if (r && !r.stale) ask.hidden = true; };
+    $('#cancel').onclick = () => { $('#rep').hidden = true; if (r && !r.stale) { ask.hidden = true; const ch = $('#change'); if (ch) { ch.hidden = false; ch.focus(); } } else $('#no').focus(); };
     $('#detail').oninput = e => { $('#n').textContent = e.target.value.length; };
     $('#send').onclick = e => {
       const d = $('#detail').value.trim();
       if (d.length < BOOT.minChars) { $('#err').textContent = msg('DETAIL_SHORT'); return; }
       submit(e.currentTarget, 'reported', d);
     };
-    const change = $('#change'); if (change) change.onclick = () => { ask.hidden = false; change.hidden = true; };
+    const change = $('#change'); if (change) change.onclick = () => { ask.hidden = false; change.hidden = true; $('#q1').focus(); };
+    if (focusStatus) { const st = $('#status'); if (st) st.focus(); }
   }
 
   function statusBlock(r) {
     const ok = r.status === 'confirmed';
-    return `<div class="status" style="margin-bottom:16px">
+    return `<div class="status" id="status" tabindex="-1">
       <div class="t"><span class="badge ${ok ? 'b-confirmed' : 'b-reported'}">${ok ? 'ยืนยันแล้ว' : 'รายงานแล้ว'}</span>
         <small>${esc(when(r.at))}</small></div>
       ${r.detail ? `<p class="d">${esc(r.detail)}</p>` : ''}
@@ -218,24 +221,27 @@
   const LABEL = { confirmed: 'ยืนยันแล้ว', reported: 'รายงาน', pending: 'ยังไม่ตอบ' };
 
   // The shell (search box, chips) is built once so typing, IME composition and focus survive
-  // the 60s poll; only the banner, tiles and rows are repainted.
+  // the 60s poll; banner, tiles and rows are repainted only when their content changed, and
+  // keyboard focus on a row button is put back, so screen-reader and keyboard users are not reset.
+  let last = { banner: null, tiles: '', rows: '' };
   function drawDash() {
     if (!dash) return;
-    if (!$('#rows')) buildShell();
+    if (!$('#rows')) { buildShell(); last = { banner: null, tiles: '', rows: '' }; }
     paintDash();
   }
 
   function buildShell() {
     app.innerHTML = `
+      <h1 class="sr">สถานะการยืนยันชั่วโมง TA ภาคเรียน ${esc(dash.term)}</h1>
       <div id="banner"></div>
       <div class="tiles" id="tiles"></div>
       <div class="card">
         <div class="tools">
           <input id="q" type="search" aria-label="ค้นหาชื่อหรือรหัส" placeholder="ค้นหาชื่อหรือรหัส" value="${esc(query)}">
-          <div class="chips">${[['all', 'ทั้งหมด'], ['reported', 'รายงาน'], ['pending', 'ยังไม่ตอบ'], ['confirmed', 'ยืนยันแล้ว']]
+          <div class="chips" role="group" aria-label="กรองตามสถานะ">${[['all', 'ทั้งหมด'], ['reported', 'รายงาน'], ['pending', 'ยังไม่ตอบ'], ['confirmed', 'ยืนยันแล้ว']]
             .map(([k, l]) => `<button class="chip" data-f="${k}" type="button">${l}</button>`).join('')}</div>
         </div>
-        <div id="rows"></div>
+        <div id="rows" role="table" aria-label="รายชื่อ TA และสถานะการยืนยัน"></div>
       </div>`;
     $('#q').oninput = e => { query = e.target.value; paintRows(); };
     app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; paintDash(); });
@@ -244,51 +250,64 @@
   function paintDash() {
     const c = dash.counts;
     document.title = (c.newReports ? '(' + c.newReports + ') ' : '') + BOOT.title;
-    $('#banner').innerHTML = c.newReports ? `<div class="banner" role="alert"><span>มีนักศึกษารายงาน ${c.newReports} รายการที่ยังไม่รับทราบ</span>
+    // The alert is re-created only when the number changes, so the 60s poll never re-announces it.
+    if (last.banner !== c.newReports) {
+      last.banner = c.newReports;
+      $('#banner').innerHTML = c.newReports ? `<div class="banner" role="alert"><span>มีนักศึกษารายงาน ${c.newReports} รายการที่ยังไม่รับทราบ</span>
         <button class="pill pill-light small" id="showRep" type="button">ดูรายการ</button></div>` : '';
-    const sr = $('#showRep'); if (sr) sr.onclick = () => { filter = 'reported'; paintDash(); };
-    $('#tiles').innerHTML = `
-        <div class="tile"><div class="v">${c.confirmed}<span style="font-size:16px;color:var(--ink2)"> / ${c.all}</span></div><div class="k">ยืนยันแล้ว</div></div>
-        <div class="tile"><div class="v" style="color:${c.reported ? 'var(--destructive)' : 'inherit'}">${c.reported}</div><div class="k">รายงานไม่ถูกต้อง</div></div>
+      const sr = $('#showRep'); if (sr) sr.onclick = () => { filter = 'reported'; paintDash(); const f = app.querySelector('[data-f="reported"]'); if (f) f.focus(); };
+    }
+    const tiles = `
+        <div class="tile"><div class="v">${c.confirmed}<span class="of"> / ${c.all}</span></div><div class="k">ยืนยันแล้ว</div></div>
+        <div class="tile"><div class="v${c.reported ? ' neg' : ''}">${c.reported}</div><div class="k">รายงานไม่ถูกต้อง</div></div>
         <div class="tile"><div class="v">${c.pending}</div><div class="k">ยังไม่ตอบ</div></div>`;
+    if (tiles !== last.tiles) { last.tiles = tiles; $('#tiles').innerHTML = tiles; }
     app.querySelectorAll('[data-f]').forEach(b => b.setAttribute('aria-pressed', String(filter === b.dataset.f)));
     paintRows();
   }
 
-  function paintRows() {
+  function paintRows(focusId) {
     const q = query.trim().toLowerCase();
     const list = dash.students.filter(s => (filter === 'all' || s.status === filter) &&
       (!q || s.name.toLowerCase().includes(q) || s.id.includes(q)));
     const rc = dash.rounds.length;
     const hv = (s, round) => { const h = s.hours.find(x => x.round === round); return h ? fmt(h.hours) : '–'; };
-    $('#rows').innerHTML = `
-        <div class="row head" style="--rc:${rc}"><span>ชื่อ</span>${dash.rounds.map(r => `<span class="num">รอบ ${r}</span>`).join('')}<span class="num">รวม</span><span>สถานะ</span></div>
+    const html = `
+        <div class="row head" role="row" style="--rc:${rc}"><span role="columnheader">ชื่อ</span>${dash.rounds.map(r => `<span class="num" role="columnheader">รอบ ${r}</span>`).join('')}<span class="num" role="columnheader">รวม</span><span role="columnheader">สถานะ</span></div>
         ${list.length ? list.map(s => `
-          <div class="row" style="--rc:${rc}">
-            <div class="nm"><b>${esc(s.name)}</b><span>${esc(s.id)}</span></div>
-            ${dash.rounds.map(r => `<span class="num"><span class="h">รอบ ${r}: </span>${hv(s, r)}</span>`).join('')}
-            <span class="num"><span class="h">รวม: </span><b>${fmt(s.total)}</b></span>
-            <span><span class="badge b-${s.status}">${LABEL[s.status]}</span>${s.stale ? ' <span class="badge b-stale">ชม.เปลี่ยน</span>' : ''}
-              ${s.at ? `<br><small style="color:var(--ink2)">${esc(when(s.at))}</small>` : ''}</span>
-            ${s.status === 'reported' ? `<div class="detail"><p>${esc(s.detail)}</p>
-              ${s.acked ? '<small style="color:var(--ink2)">รับทราบแล้ว</small>' : `<button class="pill pill-primary small" data-ack="${esc(s.responseId)}" type="button">รับทราบ</button>`}</div>` : ''}
+          <div class="row" role="row" style="--rc:${rc}">
+            <div class="nm" role="cell"><b>${esc(s.name)}</b><span>${esc(s.id)}</span></div>
+            ${dash.rounds.map(r => `<span class="num" role="cell"><span class="h" aria-hidden="true">รอบ ${r}: </span>${hv(s, r)}</span>`).join('')}
+            <span class="num" role="cell"><span class="h" aria-hidden="true">รวม: </span><b>${fmt(s.total)}</b></span>
+            <span role="cell"><span class="badge b-${s.status}">${LABEL[s.status]}</span>${s.stale ? ' <span class="badge b-stale">ชม.เปลี่ยน</span>' : ''}
+              ${s.at ? `<br><small class="dim">${esc(when(s.at))}</small>` : ''}</span>
+            ${s.status === 'reported' ? `<div class="detail" role="cell"><p>${esc(s.detail)}</p>
+              ${s.acked ? `<small class="dim" tabindex="-1" data-acked="${esc(s.responseId)}">รับทราบแล้ว</small>` : `<button class="pill pill-primary small" data-ack="${esc(s.responseId)}" type="button">รับทราบ</button>`}</div>` : ''}
           </div>`).join('') : '<p class="empty">ไม่พบรายการ</p>'}`;
+    if (html === last.rows && !focusId) return;          // nothing changed: leave the DOM (and focus) alone
+    last.rows = html;
+    const el = document.activeElement;
+    const keep = focusId || (el && el.closest && el.closest('#rows') && (el.dataset.ack || el.dataset.acked));
+    $('#rows').innerHTML = html;
+    if (keep) { const t = app.querySelector('[data-ack="' + keep + '"],[data-acked="' + keep + '"]'); if (t) t.focus(); }
     app.querySelectorAll('[data-ack]').forEach(b => b.onclick = () => busy(b, async () => {
-      const r = await api('apiAck', token, b.dataset.ack);
-      if (r.ok) { dash = r.data; paintDash(); }
+      const id = b.dataset.ack;
+      const r = await api('apiAck', token, id);
+      if (r.ok) { dash = r.data; paintDash(); paintRows(id); announce('รับทราบรายงานแล้ว'); }
     }));
   }
 
   // ---- boot --------------------------------------------------------------
   async function boot() {
     if (!token) return renderEmail();
-    app.innerHTML = '<p class="empty" style="color:var(--muted-fg)">กำลังโหลด…</p>';
+    app.innerHTML = '<p class="empty loading">กำลังโหลด…</p>';
     const r = await api('apiMe', token);
     if (!r.ok) { saveToken(null); return renderEmail(r.code === 'AUTH' ? '' : msg(r.code)); }
     const me = r.data; setWho(me.name);
-    if (me.role === 'staff') { stopPoll(); await loadDash(); poll = setInterval(loadDash, 60000); }
+    if (me.role === 'staff') { stopPoll(); await loadDash(); poll = setInterval(() => { if (!document.hidden) loadDash(); }, 60000); }
     else renderStudent(me);
   }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && poll) loadDash(); });
   boot();
 })();
 </script>
