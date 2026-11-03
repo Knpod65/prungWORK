@@ -28,7 +28,8 @@ function makeEnv() {
       put: (k, v, ttl) => { cache[k] = { v, exp: Date.now() + ttl * 1000 }; },
       remove: k => { delete cache[k]; } }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
-    MailApp: { sendEmail: m => mails.push(m), getRemainingDailyQuota: () => (env.quota === undefined ? 100 : env.quota) },
+    GmailApp: { sendEmail: (to, subject, body, o) => { if (o && o.from && env.noAlias) throw new Error('Invalid argument: from'); if (env.mailDown) throw new Error('Service invoked too many times'); mails.push(Object.assign({ to, subject, body }, o)); } },
+    MailApp: { getRemainingDailyQuota: () => (env.quota === undefined ? 100 : env.quota) },
     ScriptApp: { getService: () => ({ getUrl: () => 'https://example.test/exec' }) },
     SpreadsheetApp: { flush() {}, openById: () => ({
       getSheetByName: n => book[n] || null,

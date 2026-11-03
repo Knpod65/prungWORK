@@ -164,3 +164,27 @@ test('otp email: html carries the code, escapes config text, plain-text fallback
   assert.ok(m.htmlBody.includes('&lt;b&gt;ตรวจ&lt;/b&gt; &amp; ชม.') && !m.htmlBody.includes('<b>ตรวจ'));
   assert.ok(!/<style|<script|<img/i.test(m.htmlBody));
 });
+
+test('mail is sent as the shared alias with reply-to; falls back if the alias is not verified', () => {
+  const e = fresh();
+  e.run('apiRequestOtp("kamol@cmu.ac.th")');
+  let m = e.mails.at(-1);
+  assert.strictEqual(m.from, 'polsci.ecwp@gmail.com');
+  assert.strictEqual(m.replyTo, 'polsci.ecwp@gmail.com');
+  assert.ok(m.htmlBody && m.name);
+  e.env.noAlias = true; e.cache && Object.keys(e.cache).forEach(k => delete e.cache[k]);
+  e.run('apiRequestOtp("kamol@cmu.ac.th")');
+  m = e.mails.at(-1);
+  assert.strictEqual(m.from, undefined);           // still delivered, from the account default
+  assert.match(m.body, /\d{6}/);
+});
+
+test('if mail cannot be sent the OTP and cooldown are released so the user can retry', () => {
+  const e = fresh();
+  e.env.mailDown = true;
+  assert.strictEqual(e.run('apiRequestOtp("kamol@cmu.ac.th")').code, 'MAIL_FAIL');
+  assert.strictEqual(e.mails.length, 0);
+  e.env.mailDown = false;
+  assert.ok(e.run('apiRequestOtp("kamol@cmu.ac.th")').ok);   // no COOLDOWN
+  assert.strictEqual(e.mails.length, 1);
+});

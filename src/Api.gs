@@ -140,11 +140,9 @@ function notifyStaff_(user, rec) {
     if (!to) return;
     let url = '';
     try { url = ScriptApp.getService().getUrl(); } catch (e) { /* not deployed yet */ }
-    MailApp.sendEmail({
-      to, name: c.MAIL_SENDER_NAME,
-      subject: '[TA ' + c.TERM + '] นักศึกษารายงานชั่วโมงไม่ถูกต้อง: ' + user.name + ' (' + rec.student_id + ')',
-      body: user.name + ' (' + rec.student_id + ') รายงานว่าชั่วโมง TA ไม่ถูกต้อง\nชั่วโมงรวมในระบบ: ' + rec.hours_seen +
-        '\n\nรายละเอียด:\n' + rec.detail + (url ? '\n\nเปิดระบบ: ' + url : ''),
-    });
+    sendMail_(to,
+      '[TA ' + c.TERM + '] นักศึกษารายงานชั่วโมงไม่ถูกต้อง: ' + user.name + ' (' + rec.student_id + ')',
+      user.name + ' (' + rec.student_id + ') รายงานว่าชั่วโมง TA ไม่ถูกต้อง\nชั่วโมงรวมในระบบ: ' + rec.hours_seen +
+        '\n\nรายละเอียด:\n' + rec.detail + (url ? '\n\nเปิดระบบ: ' + url : ''));
   } catch (e) { console.error('notify failed', e); }   // never block the student's submit
 }

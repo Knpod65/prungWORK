@@ -36,6 +36,17 @@ function setup() {
   log_('setup done. Next: paste into "' + IMPORT_TAB.HOURS + '" and "' + IMPORT_TAB.ROSTER + '", then importHours() and importRoster().');
 }
 
+/**
+ * Run once from the editor after changing scopes or MAIL_FROM: grants Gmail permission and sends a
+ * test mail to yourself from the shared alias, so you see "From" exactly as students will.
+ */
+function authorizeMailSend() {
+  resetCaches_();
+  const me = Session.getEffectiveUser().getEmail();
+  sendMail_(me, 'TA Hours: ทดสอบการส่งอีเมล', 'อีเมลนี้ยืนยันว่าระบบส่งจาก ' + (cfg_().MAIL_FROM || me) + ' ได้ ลบฟังก์ชันนี้ทิ้งได้หลังทดสอบผ่าน');
+  log_('OK: test mail sent to ' + me + ' (from ' + (cfg_().MAIL_FROM || me) + ')');
+}
+
 /** Turn any term that Sheets auto-converted to a date back into text ("1/2569"). Idempotent. */
 function repairTerms_() {
   const fix = (tab, col) => {

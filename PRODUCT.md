@@ -31,7 +31,7 @@ Identity is proven by an emailed OTP to the student's @cmu.ac.th address checked
 - OTP and sessions live in CacheService (expiring), not in the sheet.
 - Response is an append-only log; the latest row per student is the current status.
 - If hours change after a student responds (`hours_seen` differs from current total), a "ชม.เปลี่ยน" badge shows and the student must answer again.
-- Notification emails go through the script owner's account (MailApp quota applies); can be toggled in Config.
+- OTP and staff notification emails go out via GmailApp as the shared Send-as alias `MAIL_FROM` (same sender as the e-EXAM script), through the script owner's Gmail account, so that account's daily mail quota applies; staff notifications can be toggled in Config.
 - Rounds are rows, so adding a round needs no new columns.
 - Roster data is personal data; the temporary `studentnow` tab must be deleted after import and `seed/` is not committed.
 

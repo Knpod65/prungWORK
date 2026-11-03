@@ -60,14 +60,33 @@ function requestOtp_(raw) {
   const code = newOtp_();
   cache.put('otp:' + email, JSON.stringify({ h: hmac_(email + ':' + code), tries: 0, exp: Date.now() + c.OTP_TTL_MIN * 60000 }), c.OTP_TTL_MIN * 60);
 
-  const body = 'รหัส OTP ของคุณคือ ' + code + '\nใช้ได้ภายใน ' + c.OTP_TTL_MIN + ' นาที อย่าบอกรหัสนี้กับผู้อื่น\nหากคุณไม่ได้ขอรหัส ให้ละเว้นอีเมลนี้';
-  MailApp.sendEmail({
-    to: email,
-    subject: 'รหัส OTP ' + code + ' – ' + c.TITLE,
-    body,
-    htmlBody: otpHtml_(code, c),
-    name: c.MAIL_SENDER_NAME,
-  });
+  const body = 'รหัส OTP ของคุณคือ ' + code + '\nใช้ได้ภายใน ' + c.OTP_TTL_MIN + ' นาที และใช้ได้ครั้งเดียว อย่าบอกรหัสนี้กับผู้อื่น\nหากคุณไม่ได้ขอรหัส ให้ละเว้นอีเมลนี้';
+  try {
+    sendMail_(email, 'รหัส OTP ' + code + ' – ' + c.TITLE, body, otpHtml_(code, c));
+  } catch (e) {
+    // The user never got this code: release the cooldown and drop the OTP so they can retry at once.
+    cache.remove('otp:' + email); cache.remove('cool:' + email);
+    console.error('otp mail failed', e && e.stack || e);
+    fail_('MAIL_FAIL');
+  }
+}
+
+/**
+ * The one place mail leaves the system. Sends as the shared Send-as alias (MAIL_FROM) with a
+ * reply-to (MAIL_REPLY_TO), the way e-EXAM does, instead of the script owner's own address.
+ * The alias must be a verified "Send mail as" address on the script owner's Gmail; if Gmail
+ * rejects it we still deliver from the owner's address rather than lock everyone out.
+ */
+function sendMail_(to, subject, body, htmlBody) {
+  const c = cfg_();
+  const opts = { name: c.MAIL_SENDER_NAME };
+  if (htmlBody) opts.htmlBody = htmlBody;
+  if (c.MAIL_REPLY_TO) opts.replyTo = c.MAIL_REPLY_TO;
+  if (c.MAIL_FROM) {
+    try { GmailApp.sendEmail(to, subject, body, Object.assign({ from: c.MAIL_FROM }, opts)); return; }
+    catch (e) { console.error('send as ' + c.MAIL_FROM + ' failed, using the account default:', e && e.message || e); }
+  }
+  GmailApp.sendEmail(to, subject, body, opts);
 }
 
 const escHtml_ = t => String(t).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -97,7 +116,7 @@ function otpHtml_(code, c) {
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="background:#F3F4F6;border-radius:12px;padding:18px 8px;">' +
           '<span style="font-size:38px;font-weight:700;line-height:1.3;letter-spacing:10px;color:#1A2E24;padding-left:10px;">' + code + '</span>' +
         '</td></tr></table>' +
-        '<p style="margin:20px 0 0;"><span style="display:inline-block;background:#7CB87A;color:#0F1A14;border-radius:9999px;padding:5px 14px;font-size:13px;font-weight:700;line-height:1.5;">ใช้ได้ภายใน ' + min + ' นาที</span></p>' +
+        '<p style="margin:20px 0 0;"><span style="display:inline-block;background:#7CB87A;color:#0F1A14;border-radius:9999px;padding:5px 14px;font-size:13px;font-weight:700;line-height:1.5;">ใช้ได้ภายใน ' + min + ' นาที</span> <span style="font-size:13px;color:#5B6770;">และใช้ได้ครั้งเดียว</span></p>' +
         '<p style="margin:20px 0 0;font-size:14px;line-height:1.8;color:#5B6770;">อย่าบอกรหัสนี้กับผู้อื่น แม้จะอ้างว่าเป็นเจ้าหน้าที่<br>หากคุณไม่ได้ขอรหัส ให้ละเว้นอีเมลนี้ได้เลย</p>' +
       '</td></tr>' +
       // footer
