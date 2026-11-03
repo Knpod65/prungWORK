@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <?!= include('styles') ?>
+</head>
+<body>
+  <svg class="scenic" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A2E24"/><stop offset="1" stop-color="#2B4A39"/></linearGradient>
+    </defs>
+    <rect width="1440" height="600" fill="url(#sky)"/>
+    <circle cx="1130" cy="170" r="70" fill="#7CB87A" opacity=".16"/>
+    <path d="M0 400 C220 320 380 360 560 330 C760 295 900 350 1100 320 C1250 298 1360 330 1440 310 V600 H0Z" fill="#26402F"/>
+    <path d="M0 450 C180 400 360 440 540 420 C760 395 980 450 1200 415 C1320 398 1400 420 1440 410 V600 H0Z" fill="#2E5238"/>
+    <ellipse cx="760" cy="520" rx="330" ry="38" fill="#3D6E78" opacity=".55"/>
+    <path d="M0 520 C240 490 480 540 720 525 C980 508 1200 545 1440 515 V600 H0Z" fill="#35603F"/>
+    <g fill="#1F3A2B"><circle cx="150" cy="405" r="38"/><circle cx="215" cy="420" r="30"/><circle cx="1290" cy="395" r="42"/><circle cx="1220" cy="415" r="28"/></g>
+  </svg>
+
+  <header class="nav">
+    <div class="brand"><span class="leaf"></span><span id="brand"></span></div>
+    <div class="who" id="who" hidden>
+      <span id="whoName"></span>
+      <button class="pill pill-light small" id="logout" type="button">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <main id="app" aria-live="polite"></main>
+
+  <footer class="proof"><span id="faculty"></span></footer>
+
+  <script>const BOOT = <?!= boot ?>;</script>
+  <?!= include('app') ?>
+</body>
+</html>

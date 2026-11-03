@@ -1,0 +1,13 @@
+{
+  "name": "ta-hours-check",
+  "private": true,
+  "description": "TA hours confirmation web app (Google Apps Script + Google Sheets, OTP login)",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "push": "clasp push",
+    "deploy": "clasp push && clasp deploy --description \"ta-hours-check\""
+  },
+  "devDependencies": {
+    "@google/clasp": "^3.0.0"
+  }
+}

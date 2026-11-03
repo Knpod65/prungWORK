@@ -1,0 +1,221 @@
+<script>
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const app = $('#app');
+  const MSG = {
+    BAD_EMAIL: 'รูปแบบอีเมลไม่ถูกต้อง', COOLDOWN: 'ขอรหัสบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่',
+    OTP_EXPIRED: 'รหัสหมดอายุ กรุณาขอรหัสใหม่', OTP_LOCKED: 'กรอกผิดเกินกำหนด กรุณาขอรหัสใหม่',
+    OTP_BAD: 'รหัสไม่ถูกต้อง', AUTH: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', FORBIDDEN: 'ไม่มีสิทธิ์ใช้งานส่วนนี้',
+    DETAIL_SHORT: 'กรุณาอธิบายให้ละเอียดขึ้นอีกเล็กน้อย', NO_HOURS: 'ยังไม่มีข้อมูลชั่วโมงของคุณในภาคเรียนนี้',
+    NETWORK: 'เชื่อมต่อไม่ได้ กรุณาลองใหม่', ERROR: 'เกิดข้อผิดพลาด กรุณาลองใหม่',
+  };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = n => Number(n).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const when = iso => iso ? new Date(iso).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }) : '';
+  const msg = c => MSG[c] || MSG.ERROR;
+
+  let token = null;
+  try { token = sessionStorage.getItem('ta_token'); } catch (e) {}
+  const saveToken = t => { token = t; try { t ? sessionStorage.setItem('ta_token', t) : sessionStorage.removeItem('ta_token'); } catch (e) {} };
+
+  function api(fn, ...args) {
+    return new Promise(res => {
+      google.script.run
+        .withSuccessHandler(res)
+        .withFailureHandler(() => res({ ok: false, code: 'NETWORK' }))[fn](...args);
+    });
+  }
+  async function busy(btn, work) {
+    const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+    try { return await work(); } finally { btn.disabled = false; btn.innerHTML = old; }
+  }
+
+  $('#brand').textContent = BOOT.title + ' · ' + BOOT.term;
+  $('#faculty').textContent = BOOT.faculty;
+  document.title = BOOT.title;
+
+  function setWho(name) {
+    $('#who').hidden = !name; $('#whoName').textContent = name || '';
+  }
+  $('#logout').onclick = async () => { const t = token; saveToken(null); stopPoll(); setWho(null); renderEmail(); if (t) api('apiLogout', t); };
+
+  // ---- login -------------------------------------------------------------
+  const oval = '<svg viewBox="0 0 200 80" preserveAspectRatio="none" aria-hidden="true"><path d="M22 42 C14 14 150 2 184 26 C204 52 96 80 30 60 C8 52 26 28 70 18"/></svg>';
+
+  function renderEmail(note) {
+    app.innerHTML = `
+      <section class="hero">
+        <h1>ตรวจสอบ<span class="em">ชั่วโมง${oval}</span> TA<br>ของคุณ</h1>
+        <p class="lead">เข้าสู่ระบบด้วยอีเมล @cmu.ac.th เราจะส่งรหัส OTP ไปให้</p>
+        <form class="form" id="f" novalidate>
+          <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="อีเมลมหาวิทยาลัย" required>
+          <button class="pill pill-primary" type="submit">รับรหัส OTP</button>
+          <div class="err" id="err" role="alert">${esc(note || '')}</div>
+        </form>
+      </section>`;
+    const f = $('#f'), email = $('#email'); email.focus();
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const r = await busy(f.querySelector('button'), () => api('apiRequestOtp', email.value));
+      if (r.ok) renderCode(email.value.trim().toLowerCase());
+      else $('#err').textContent = msg(r.code);
+    };
+  }
+
+  function renderCode(email) {
+    app.innerHTML = `
+      <section class="hero">
+        <h1>กรอก<span class="em">รหัส${oval}</span> OTP</h1>
+        <p class="lead">หากอีเมล <b>${esc(email)}</b> อยู่ในระบบ เราได้ส่งรหัส 6 หลักไปแล้ว (ใช้ได้ ${BOOT.otpMin} นาที) ตรวจสอบกล่องจดหมายและจดหมายขยะ หากไม่ได้รับ โปรดติดต่อเจ้าหน้าที่</p>
+        <form class="form" id="f" novalidate>
+          <input id="code" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
+          <button class="pill pill-primary" type="submit">ยืนยันรหัส</button>
+          <div class="err" id="err" role="alert"></div>
+          <button class="linkbtn hint" type="button" id="back">ใช้อีเมลอื่น / ขอรหัสใหม่</button>
+        </form>
+      </section>`;
+    const f = $('#f'), code = $('#code'); code.focus();
+    $('#back').onclick = () => renderEmail();
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const r = await busy(f.querySelector('button'), () => api('apiVerifyOtp', email, code.value));
+      if (r.ok) { saveToken(r.data); boot(); }
+      else { $('#err').textContent = msg(r.code); code.value = ''; code.focus(); }
+    };
+  }
+
+  // ---- student -----------------------------------------------------------
+  function renderStudent(me) {
+    const s = me.student;
+    if (!s || !s.hours.length) {
+      app.innerHTML = `<div class="card"><p class="who-name">${esc(me.name)}</p><p class="empty">${esc(msg('NO_HOURS'))}</p></div>`;
+      return;
+    }
+    const r = s.response;
+    app.innerHTML = `
+      <section class="hero"><h1>ตรวจสอบ<span class="em">ชั่วโมง${oval}</span> TA</h1></section>
+      <div class="card">
+        <p class="who-name">${esc(me.name)}</p>
+        <div class="meta">รหัสนักศึกษา ${esc(s.id)} · ภาคเรียนที่ ${esc(s.term)}</div>
+        <div class="stats">
+          ${s.hours.map(h => `<div class="stat"><div class="k">รอบที่ ${h.round}</div><div class="v">${fmt(h.hours)}</div></div>`).join('')}
+          <div class="stat total"><div class="k">ชั่วโมงรวม</div><div class="v">${fmt(s.total)}</div></div>
+        </div>
+        ${r ? statusBlock(r) : ''}
+        <div id="ask" ${r && !r.stale ? 'hidden' : ''}>
+          <p class="q">ชั่วโมงรวม ${fmt(s.total)} ชั่วโมง ถูกต้องหรือไม่</p>
+          <div class="actions">
+            <button class="pill pill-primary" id="yes" type="button">ถูกต้อง ยืนยัน</button>
+            <button class="pill pill-outline" id="no" type="button">ไม่ถูกต้อง รายงาน</button>
+          </div>
+          <div class="report" id="rep" hidden>
+            <textarea id="detail" maxlength="1000" placeholder="บอกเจ้าหน้าที่ว่าไม่ถูกต้องตรงไหน เช่น รอบที่ 2 ควรเป็น 50 ชั่วโมง"></textarea>
+            <div class="count"><span id="n">0</span>/1000</div>
+            <div class="err" id="err" role="alert" style="color:var(--destructive)"></div>
+            <div class="actions">
+              <button class="pill pill-danger" id="send" type="button">ส่งรายงาน</button>
+              <button class="pill pill-outline" id="cancel" type="button">ยกเลิก</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    const submit = (btn, status, detail) => busy(btn, async () => {
+      const res = await api('apiSubmit', token, status, detail);
+      if (res.ok) { me.student = res.data; renderStudent(me); }
+      else if (res.code === 'AUTH') { saveToken(null); setWho(null); renderEmail(msg('AUTH')); }
+      else { const e = $('#err'); $('#rep').hidden = false; e.textContent = msg(res.code); }
+    });
+    const ask = $('#ask');
+    $('#yes').onclick = e => submit(e.currentTarget, 'confirmed', '');
+    $('#no').onclick = () => { $('#rep').hidden = false; $('#detail').focus(); };
+    $('#cancel').onclick = () => { $('#rep').hidden = true; if (r && !r.stale) ask.hidden = true; };
+    $('#detail').oninput = e => { $('#n').textContent = e.target.value.length; };
+    $('#send').onclick = e => {
+      const d = $('#detail').value.trim();
+      if (d.length < BOOT.minChars) { $('#err').textContent = msg('DETAIL_SHORT'); return; }
+      submit(e.currentTarget, 'reported', d);
+    };
+    const change = $('#change'); if (change) change.onclick = () => { ask.hidden = false; change.hidden = true; };
+  }
+
+  function statusBlock(r) {
+    const ok = r.status === 'confirmed';
+    return `<div class="status" style="margin-bottom:16px">
+      <div class="t"><span class="badge ${ok ? 'b-confirmed' : 'b-reported'}">${ok ? 'ยืนยันแล้ว' : 'รายงานแล้ว'}</span>
+        <small>${esc(when(r.at))}</small></div>
+      ${r.detail ? `<p class="d">${esc(r.detail)}</p>` : ''}
+      ${r.stale ? `<p class="d"><b>ชั่วโมงถูกปรับปรุงหลังคุณตอบ</b> (ตอนนั้น ${fmt(r.hoursSeen)} ชม.) กรุณาตรวจสอบและตอบอีกครั้ง</p>`
+                : `<p class="d"><button class="linkbtn" id="change" type="button">เปลี่ยนคำตอบ</button></p>`}
+    </div>`;
+  }
+
+  // ---- staff -------------------------------------------------------------
+  let dash = null, filter = 'all', query = '', poll = null;
+  const stopPoll = () => { clearInterval(poll); poll = null; document.title = BOOT.title; };
+
+  async function loadDash() {
+    const r = await api('apiDashboard', token);
+    if (!r.ok) { if (r.code === 'AUTH') { stopPoll(); saveToken(null); setWho(null); renderEmail(msg('AUTH')); } return; }
+    dash = r.data; drawDash();
+  }
+
+  const LABEL = { confirmed: 'ยืนยันแล้ว', reported: 'รายงาน', pending: 'ยังไม่ตอบ' };
+
+  function drawDash() {
+    if (!dash) return;
+    const c = dash.counts;
+    document.title = (c.newReports ? '(' + c.newReports + ') ' : '') + BOOT.title;
+    const q = query.trim().toLowerCase();
+    const list = dash.students.filter(s => (filter === 'all' || s.status === filter) &&
+      (!q || s.name.toLowerCase().includes(q) || s.id.includes(q)));
+    const rc = dash.rounds.length;
+    const hv = (s, round) => { const h = s.hours.find(x => x.round === round); return h ? fmt(h.hours) : '–'; };
+    app.innerHTML = `
+      ${c.newReports ? `<div class="banner" role="alert"><span>มีนักศึกษารายงาน ${c.newReports} รายการที่ยังไม่รับทราบ</span>
+        <button class="pill pill-light small" id="showRep" type="button">ดูรายการ</button></div>` : ''}
+      <div class="tiles">
+        <div class="tile"><div class="v">${c.confirmed}<span style="font-size:16px;color:var(--ink2)"> / ${c.all}</span></div><div class="k">ยืนยันแล้ว</div></div>
+        <div class="tile"><div class="v" style="color:${c.reported ? 'var(--destructive)' : 'inherit'}">${c.reported}</div><div class="k">รายงานไม่ถูกต้อง</div></div>
+        <div class="tile"><div class="v">${c.pending}</div><div class="k">ยังไม่ตอบ</div></div>
+      </div>
+      <div class="card">
+        <div class="tools">
+          <input id="q" type="search" placeholder="ค้นหาชื่อหรือรหัส" value="${esc(query)}">
+          <div class="chips">${[['all', 'ทั้งหมด'], ['reported', 'รายงาน'], ['pending', 'ยังไม่ตอบ'], ['confirmed', 'ยืนยันแล้ว']]
+            .map(([k, l]) => `<button class="chip" data-f="${k}" aria-pressed="${filter === k}">${l}</button>`).join('')}</div>
+        </div>
+        <div class="row head" style="--rc:${rc}"><span>ชื่อ</span>${dash.rounds.map(r => `<span class="num">รอบ ${r}</span>`).join('')}<span class="num">รวม</span><span>สถานะ</span></div>
+        ${list.length ? list.map(s => `
+          <div class="row" style="--rc:${rc}">
+            <div class="nm"><b>${esc(s.name)}</b><span>${esc(s.id)}</span></div>
+            ${dash.rounds.map(r => `<span class="num"><span class="h">รอบ ${r}: </span>${hv(s, r)}</span>`).join('')}
+            <span class="num"><b>${fmt(s.total)}</b></span>
+            <span><span class="badge b-${s.status}">${LABEL[s.status]}</span>${s.stale ? ' <span class="badge b-stale">ชม.เปลี่ยน</span>' : ''}
+              ${s.at ? `<br><small style="color:var(--ink2)">${esc(when(s.at))}</small>` : ''}</span>
+            ${s.status === 'reported' ? `<div class="detail"><p>${esc(s.detail)}</p>
+              ${s.acked ? '<small style="color:var(--ink2)">รับทราบแล้ว</small>' : `<button class="pill pill-primary small" data-ack="${esc(s.responseId)}" type="button">รับทราบ</button>`}</div>` : ''}
+          </div>`).join('') : '<p class="empty">ไม่พบรายการ</p>'}
+      </div>`;
+    const sr = $('#showRep'); if (sr) sr.onclick = () => { filter = 'reported'; drawDash(); };
+    const qi = $('#q'); qi.oninput = e => { query = e.target.value; const p = e.target.selectionStart; drawDash(); const n = $('#q'); n.focus(); n.setSelectionRange(p, p); };
+    app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filter = b.dataset.f; drawDash(); });
+    app.querySelectorAll('[data-ack]').forEach(b => b.onclick = () => busy(b, async () => {
+      const r = await api('apiAck', token, b.dataset.ack);
+      if (r.ok) { dash = r.data; drawDash(); }
+    }));
+  }
+
+  // ---- boot --------------------------------------------------------------
+  async function boot() {
+    if (!token) return renderEmail();
+    app.innerHTML = '<p class="empty" style="color:var(--muted-fg)">กำลังโหลด…</p>';
+    const r = await api('apiMe', token);
+    if (!r.ok) { saveToken(null); return renderEmail(r.code === 'AUTH' ? '' : msg(r.code)); }
+    const me = r.data; setWho(me.name);
+    if (me.role === 'staff') { stopPoll(); await loadDash(); poll = setInterval(loadDash, 60000); }
+    else renderStudent(me);
+  }
+  boot();
+})();
+</script>
