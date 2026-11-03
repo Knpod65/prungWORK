@@ -60,9 +60,15 @@ function cfg_() {
     const d = CONFIG_DEFAULTS[k];
     if (typeof d === 'number') c[k] = Number(r.value) || d;
     else if (typeof d === 'boolean') c[k] = String(r.value).trim().toUpperCase() !== 'FALSE';
-    else c[k] = String(r.value);
+    else c[k] = k === 'TERM' ? termOf_(r.value) : String(r.value);
   });
   return (cfgMemo_ = c);
+}
+
+/** Sheets turns "1/2569" into a date (Jan 2569). Read either form back as "1/2569". */
+function termOf_(v) {
+  if (v instanceof Date) return (v.getMonth() + 1) + '/' + v.getFullYear();
+  return String(v === undefined || v === null ? '' : v).trim();
 }
 
 const norm_ = v => String(v === undefined || v === null ? '' : v).trim().toLowerCase();

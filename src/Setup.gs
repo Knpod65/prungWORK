@@ -22,8 +22,10 @@ function setup() {
     const sh = book.getSheetByName(name) || book.insertSheet(name);
     sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
     sh.setFrozenRows(1);
-    head.forEach((k, i) => { if (/(^|_)id$|^email$/.test(k)) sh.getRange(2, i + 1, sh.getMaxRows() - 1, 1).setNumberFormat('@'); });
+    head.forEach((k, i) => { if (/(^|_)id$|^email$|^term$|^value$/.test(k)) sh.getRange(2, i + 1, sh.getMaxRows() - 1, 1).setNumberFormat('@'); });
   });
+
+  repairTerms_();
 
   // Config: add any missing keys, never overwrite what the admin edited.
   const have = {};
@@ -32,6 +34,21 @@ function setup() {
 
   if (!rows_(TAB.STAFF).length) SEED_STAFF.forEach(s => append_(TAB.STAFF, { email: s[0], name: s[1] }));
   log_('setup done. Next: paste into "' + IMPORT_TAB.HOURS + '" and "' + IMPORT_TAB.ROSTER + '", then importHours() and importRoster().');
+}
+
+/** Turn any term that Sheets auto-converted to a date back into text ("1/2569"). Idempotent. */
+function repairTerms_() {
+  const fix = (tab, col) => {
+    const rows = rows_(tab);
+    if (!rows.some(r => r[col] instanceof Date)) return;
+    rewrite_(tab, rows.map(r => Object.assign(r, { [col]: termOf_(r[col]) })));
+  };
+  const cfgRows = rows_(TAB.CONFIG);
+  if (cfgRows.some(r => String(r.key) === 'TERM' && r.value instanceof Date)) {
+    rewrite_(TAB.CONFIG, cfgRows.map(r => String(r.key) === 'TERM' ? Object.assign(r, { value: termOf_(r.value) }) : r));
+  }
+  fix(TAB.HOURS, 'term');
+  fix(TAB.RESPONSE, 'term');
 }
 
 /** Read a pasted tab: find the header row containing all of `must`, return {head, rows}. */
@@ -95,7 +112,7 @@ function applyHours_(term, people, hours) {
       else students.push({ student_id: sid, name: people[sid], email: '' });
     });
     rewrite_(TAB.STUDENT, students);
-    rewrite_(TAB.HOURS, rows_(TAB.HOURS).filter(h => !(String(h.term) === term && people[id_(h.student_id)])).concat(hours));
+    rewrite_(TAB.HOURS, rows_(TAB.HOURS).filter(h => !(termOf_(h.term) === term && people[id_(h.student_id)])).concat(hours));
   });
 }
 

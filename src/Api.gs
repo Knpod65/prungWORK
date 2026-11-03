@@ -72,7 +72,7 @@ const iso_ = d => (d instanceof Date ? d.toISOString() : d ? String(d) : null);
 
 function hoursOf_(term) {
   const by = {};
-  rows_(TAB.HOURS).filter(r => String(r.term) === term).forEach(r => {
+  rows_(TAB.HOURS).filter(r => termOf_(r.term) === term).forEach(r => {
     (by[id_(r.student_id)] = by[id_(r.student_id)] || []).push({ round: Number(r.round), hours: Number(r.hours) || 0 });
   });
   Object.keys(by).forEach(k => by[k].sort((a, b) => a.round - b.round));
@@ -84,7 +84,7 @@ const sum_ = list => Math.round(list.reduce((t, h) => t + h.hours, 0) * 100) / 1
 /** Latest response per student for the term (the log is append-only; last row wins). */
 function latestResponses_(term) {
   const m = {};
-  rows_(TAB.RESPONSE).filter(r => String(r.term) === term).forEach(r => { m[id_(r.student_id)] = r; });
+  rows_(TAB.RESPONSE).filter(r => termOf_(r.term) === term).forEach(r => { m[id_(r.student_id)] = r; });
   return m;
 }
 

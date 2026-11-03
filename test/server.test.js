@@ -127,3 +127,18 @@ test('config tab drives behaviour (no hard-coded term)', () => {
   const t = login(e, 'kamol@cmu.ac.th').r.data;
   assert.strictEqual(e.run(`apiMe("${t}")`).data.student.hours.length, 0);   // no hours for the new term yet
 });
+
+test('term auto-converted to a date by Sheets still works, and setup() repairs it', () => {
+  const e = fresh();
+  const d = new Date(2569, 0, 1);                              // what Sheets makes of "1/2569"
+  e.book.Config.data.find(r => r[0] === 'TERM')[1] = d;
+  e.book.Hours.data.slice(1).forEach(r => { r[0] = d; });
+  e.run('resetCaches_()');
+  const t = login(e, 'rungtiwa.p@cmu.ac.th').r.data;
+  const dash = e.run(`apiDashboard("${t}")`).data;
+  assert.strictEqual(dash.counts.all, 3);
+  assert.strictEqual(dash.term, '1/2569');
+  e.run('setup()');
+  assert.strictEqual(e.book.Config.data.find(r => r[0] === 'TERM')[1], '1/2569');
+  assert.ok(e.book.Hours.data.slice(1).every(r => r[0] === '1/2569'));
+});
