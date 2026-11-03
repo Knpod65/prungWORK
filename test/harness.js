@@ -30,7 +30,7 @@ function makeEnv() {
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     MailApp: { sendEmail: m => mails.push(m) },
     ScriptApp: { getService: () => ({ getUrl: () => 'https://example.test/exec' }) },
-    SpreadsheetApp: { openById: () => ({
+    SpreadsheetApp: { flush() {}, openById: () => ({
       getSheetByName: n => book[n] || null,
       insertSheet: n => (book[n] = sheet(n)) }) },
     Utilities: {

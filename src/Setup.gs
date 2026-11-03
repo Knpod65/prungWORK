@@ -113,7 +113,15 @@ function applyHours_(term, people, hours) {
     });
     rewrite_(TAB.STUDENT, students);
     rewrite_(TAB.HOURS, rows_(TAB.HOURS).filter(h => !(termOf_(h.term) === term && people[id_(h.student_id)])).concat(hours));
+    SpreadsheetApp.flush();
   });
+  // read back from the sheet: never report success on data that is not there
+  const ids = Object.keys(people);
+  const gotStudents = rows_(TAB.STUDENT).filter(s => people[id_(s.student_id)]).length;
+  const gotHours = rows_(TAB.HOURS).filter(h => termOf_(h.term) === term && people[id_(h.student_id)]).length;
+  if (gotStudents !== ids.length || gotHours !== hours.length) {
+    throw new Error('Write check failed: Student ' + gotStudents + '/' + ids.length + ', Hours ' + gotHours + '/' + hours.length);
+  }
 }
 
 /** mail: {id: email}. Returns ids that have no email. */
@@ -126,6 +134,7 @@ function applyEmails_(mail) {
       if (e) s.email = e; else missing.push(id_(s.student_id));
     });
     rewrite_(TAB.STUDENT, students);
+    SpreadsheetApp.flush();
   });
   return missing;
 }
