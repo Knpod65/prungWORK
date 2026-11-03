@@ -188,3 +188,34 @@ test('if mail cannot be sent the OTP and cooldown are released so the user can r
   assert.ok(e.run('apiRequestOtp("kamol@cmu.ac.th")').ok);   // no COOLDOWN
   assert.strictEqual(e.mails.length, 1);
 });
+
+const setCfg = (e, key, value) => e.run(`rewrite_("Config", rows_("Config").map(r => r.key === ${JSON.stringify(key)} ? Object.assign(r, { value: ${JSON.stringify(value)} }) : r)); resetCaches_()`);
+const report = (e, detail) => {
+  e.token = e.token || login(e, 'kamol@cmu.ac.th').r.data;     // one login per test (resend cooldown)
+  e.mails.length = 0;
+  e.run(`apiSubmit("${e.token}","reported",${JSON.stringify(detail)})`);
+  return e.mails.at(-1);
+};
+
+test('report email: themed html, student text escaped, link only for https, plain-text kept', () => {
+  const e = fresh();
+  const m = report(e, 'รอบที่ 2 ควรเป็น 50 <script>alert(1)</script>\nบรรทัดสอง');
+  assert.ok(m.htmlBody.includes('กมลพรรณ พุทธขาว') && m.htmlBody.includes('661910002') && m.htmlBody.includes('80 ชั่วโมง'));
+  assert.ok(m.htmlBody.includes('&lt;script&gt;alert(1)&lt;/script&gt;<br>บรรทัดสอง'));
+  assert.ok(!/<script|<style|<img/i.test(m.htmlBody));
+  assert.ok(m.htmlBody.includes('href="https://example.test/exec"'));
+  assert.match(m.body, /รอบที่ 2 ควรเป็น 50/);
+  assert.match(m.subject, /\[TA 1\/2569\] .*กมลพรรณ/);
+});
+
+test('report email goes only to NOTIFY_TO (default rungtiwa.p); blank means everyone in Staff', () => {
+  const e = fresh();
+  e.run('append_("Staff", { email: "other@cmu.ac.th", name: "อื่น" })');
+  assert.strictEqual(report(e, 'ชั่วโมงไม่ถูกต้องหลายรอบ').to, 'rungtiwa.p@cmu.ac.th');
+  setCfg(e, 'NOTIFY_TO', 'a@cmu.ac.th, B@cmu.ac.th');
+  assert.strictEqual(report(e, 'ชั่วโมงไม่ถูกต้องหลายรอบ').to, 'a@cmu.ac.th,b@cmu.ac.th');
+  setCfg(e, 'NOTIFY_TO', '');
+  assert.strictEqual(report(e, 'ชั่วโมงไม่ถูกต้องหลายรอบ').to, 'rungtiwa.p@cmu.ac.th,other@cmu.ac.th');
+  setCfg(e, 'NOTIFY_EMAIL', 'FALSE');
+  assert.strictEqual(report(e, 'ชั่วโมงไม่ถูกต้องหลายรอบ'), undefined);   // switched off: no mail
+});

@@ -91,12 +91,12 @@ function appHtml(shot, { marks, withMeta }) {
   return html.replace('</body>', run + '</body>');
 }
 
-function emailHtml(marks, withMeta) {
+function emailHtml(shot, withMeta) {
   const require = createRequire(import.meta.url);
   const { makeEnv } = require(path.join(ROOT, 'test/harness.js'));
   const e = makeEnv(); const log = console.log; console.log = () => {};
   try { e.run('setup()'); } finally { console.log = log; }
-  const body = e.run('otpHtml_("482916", cfg_())');
+  const body = e.run(shot.emailExpr);
   const probe = `<script>(()=>{const t=document.querySelector('table table'); const r=t.getBoundingClientRect(); const p=document.createElement('pre'); p.id='meta';
     p.textContent=JSON.stringify({h:Math.ceil(r.bottom+scrollY+36),clip:null,miss:[]}); document.body.prepend(p);})();</script>`;
   return body.replace('</body>', (withMeta ? probe : '') + '</body>');
@@ -108,14 +108,14 @@ function shoot(shot) {
   const size = (w, h) => ['--window-size=' + w + ',' + h, '--force-device-scale-factor=' + SCALE];
 
   // pass 1: measure page height and the clip rectangle
-  fs.writeFileSync(file(shot.id), shot.kind === 'email' ? emailHtml(false, true) : appHtml(shot, { marks: false, withMeta: true }));
+  fs.writeFileSync(file(shot.id), shot.kind === 'email' ? emailHtml(shot, true) : appHtml(shot, { marks: false, withMeta: true }));
   const dom = chrome([...size(shot.w, 1500), '--virtual-time-budget=8000', '--dump-dom', url(shot.id)]);
   const mm = /<pre id="meta">([^<]*)<\/pre>/.exec(dom);
   if (!mm) throw new Error('no meta for ' + shot.id);
   const meta = JSON.parse(mm[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
 
   // pass 2: screenshot with the numbered boxes drawn
-  fs.writeFileSync(file(shot.id), shot.kind === 'email' ? emailHtml(false, false) : appHtml(shot, { marks: true, withMeta: false }));
+  fs.writeFileSync(file(shot.id), shot.kind === 'email' ? emailHtml(shot, false) : appHtml(shot, { marks: true, withMeta: false }));
   const raw = path.join(BUILD, `${shot.id}.png`);
   chrome([...size(shot.w, Math.max(meta.h, 200)), '--virtual-time-budget=8000', '--screenshot=' + raw, url(shot.id)]);
 

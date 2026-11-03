@@ -132,17 +132,24 @@ function dashboard_() {
   };
 }
 
+/** Who gets the "student reported" email: NOTIFY_TO (comma separated); blank = everyone in the Staff tab. */
+function notifyRecipients_(c) {
+  const listed = String(c.NOTIFY_TO || '').split(/[,;\s]+/).map(norm_).filter(e => EMAIL_RE.test(e));
+  return listed.length ? listed : rows_(TAB.STAFF).map(s => norm_(s.email)).filter(Boolean);
+}
+
 function notifyStaff_(user, rec) {
   const c = cfg_();
   if (!c.NOTIFY_EMAIL) return;
   try {
-    const to = rows_(TAB.STAFF).map(s => norm_(s.email)).filter(Boolean).join(',');
+    const to = notifyRecipients_(c).join(',');
     if (!to) return;
     let url = '';
     try { url = ScriptApp.getService().getUrl(); } catch (e) { /* not deployed yet */ }
     sendMail_(to,
       '[TA ' + c.TERM + '] นักศึกษารายงานชั่วโมงไม่ถูกต้อง: ' + user.name + ' (' + rec.student_id + ')',
       user.name + ' (' + rec.student_id + ') รายงานว่าชั่วโมง TA ไม่ถูกต้อง\nชั่วโมงรวมในระบบ: ' + rec.hours_seen +
-        '\n\nรายละเอียด:\n' + rec.detail + (url ? '\n\nเปิดระบบ: ' + url : ''));
+        '\n\nรายละเอียด:\n' + rec.detail + (url ? '\n\nเปิดระบบ: ' + url : ''),
+      notifyHtml_(user, rec, url, c));
   } catch (e) { console.error('notify failed', e); }   // never block the student's submit
 }

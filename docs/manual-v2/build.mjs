@@ -164,29 +164,22 @@ ${step('4', 'ใช้บนมือถือ', 't4')}
 <p>ภาพนี้แสดงเฉพาะส่วนบนของหน้า ที่เหลือเลื่อนลงดูได้</p></div><figure class="phone">${img('d-mobile')}</figure></section>
 
 ${step('5', 'อีเมลแจ้งเตือนเมื่อมีรายงาน', 't5')}
-<p>เมื่อนักศึกษากด “ส่งรายงาน” ระบบส่งอีเมลถึง<b>เจ้าหน้าที่ทุกคนในแท็บ <code>Staff</code></b> ดังตัวอย่าง</p>
-<div class="mail">
-  <div class="mh"><span>จาก</span> ระบบตรวจสอบชั่วโมง TA &lt;polsci.ecwp@gmail.com&gt;</div>
-  <div class="mh"><span>หัวเรื่อง</span> <b>[TA 1/2569] นักศึกษารายงานชั่วโมงไม่ถูกต้อง: สมหญิง รักเรียน (691910001)</b></div>
-  <div class="mb">สมหญิง รักเรียน (691910001) รายงานว่าชั่วโมง TA ไม่ถูกต้อง
-ชั่วโมงรวมในระบบ: 80
-
-รายละเอียด:
-รอบที่ 2 ควรเป็น 50 ชั่วโมง เพราะมีงานสอนเพิ่มเติมเมื่อ 10–14 ก.ย.
-
-เปิดระบบ: https://script.google.com/macros/s/…/exec</div>
-</div>
-<p>อีเมลบอกชื่อ รหัส ชั่วโมงรวมในระบบ ข้อความของนักศึกษา และลิงก์เปิดระบบ ปิดการแจ้งเตือนทางอีเมลได้โดยตั้ง <code>NOTIFY_EMAIL</code> เป็น <code>FALSE</code> ในแท็บ <code>Config</code></p>
+<p>เมื่อนักศึกษากด “ส่งรายงาน” ระบบส่งอีเมลแจ้งผู้รับที่ตั้งไว้ ดังตัวอย่าง</p>
+<section class="screen"><figure class="narrow">${img('email-notify')}<figcaption>อีเมลแจ้งเตือน (ตัวอย่าง) ปุ่มสีน้ำเงินเปิดระบบไปที่แดชบอร์ด</figcaption></figure></section>
+<p>อีเมลบอกชื่อ รหัส ภาคเรียน ชั่วโมงรวมในระบบ และข้อความของนักศึกษา ส่งในนาม <code>polsci.ecwp@gmail.com</code> หัวเรื่องขึ้นต้นด้วย <code>[TA 1/2569]</code> เพื่อค้นหาได้ง่าย</p>
+<p>ผู้รับตั้งได้ที่ <code>NOTIFY_TO</code> ในแท็บ <code>Config</code> (ค่าตั้งต้นคือ <code>rungtiwa.p@cmu.ac.th</code> คนเดียว ใส่หลายอีเมลคั่นด้วยจุลภาคได้ หรือเว้นว่างเพื่อส่งถึงทุกคนในแท็บ <code>Staff</code>)
+ปิดการแจ้งเตือนทางอีเมลได้โดยตั้ง <code>NOTIFY_EMAIL</code> เป็น <code>FALSE</code></p>
 
 <div class="part">ส่วนที่ 3 สำหรับผู้ดูแลระบบ</div>
 ${step('1', 'งานประจำในชีต (ไม่ต้องแก้โค้ด)', 'u1')}
 ${table2(['ต้องการ', 'ทำที่ไหน'], [
-  ['เพิ่ม/ลบเจ้าหน้าที่', 'แท็บ <code>Staff</code> เพิ่มหรือลบแถว (อีเมล และชื่อ) มีผลทันที และผู้ที่อยู่ในแท็บนี้จะได้รับอีเมลแจ้งเตือนด้วย'],
+  ['เพิ่ม/ลบเจ้าหน้าที่', 'แท็บ <code>Staff</code> เพิ่มหรือลบแถว (อีเมล และชื่อ) มีผลทันที (ผู้รับอีเมลแจ้งเตือนตั้งแยกที่ <code>NOTIFY_TO</code>)'],
   ['เพิ่มนักศึกษา หรือแก้อีเมลที่รับ OTP', 'แท็บ <code>Student</code> (รหัส ชื่อ อีเมล) นักศึกษาที่ไม่มีอีเมลจะเข้าสู่ระบบไม่ได้'],
   ['แก้ชั่วโมง', 'แท็บ <code>Hours</code> หนึ่งแถวต่อคนต่อรอบ นักศึกษาที่ตอบไปแล้วจะเห็นป้าย “ชม.เปลี่ยน” และต้องตอบใหม่'],
   ['เปลี่ยนภาคเรียน', 'แก้ <code>TERM</code> ในแท็บ <code>Config</code> วางข้อมูลใหม่ในแท็บ <code>import_TA</code> แล้วรัน <code>importHours()</code> ข้อมูลภาคเก่าไม่ถูกแตะ'],
   ['ดูประวัติคำตอบ', 'แท็บ <code>Response</code> (เพิ่มต่อท้ายอย่างเดียว แถวล่าสุดของแต่ละคนคือสถานะปัจจุบัน) และ <code>Ack</code> (ใครรับทราบเมื่อใด)'],
   ['ปรับอายุรหัสและจำนวนครั้งที่กรอกผิดได้', '<code>OTP_TTL_MIN</code> (10) · <code>OTP_MAX_TRIES</code> (5) · <code>OTP_RESEND_SEC</code> (60) ในแท็บ <code>Config</code>'],
+  ['เปลี่ยนผู้รับอีเมลแจ้งเตือนรายงาน', '<code>NOTIFY_TO</code> ในแท็บ <code>Config</code> ใส่อีเมลเดียวหรือหลายอีเมลคั่นด้วยจุลภาค เว้นว่าง = ทุกคนในแท็บ <code>Staff</code>'],
   ['เปลี่ยนชื่อผู้ส่งหรือที่อยู่ที่ใช้ส่ง', '<code>MAIL_SENDER_NAME</code> · <code>MAIL_FROM</code> · <code>MAIL_REPLY_TO</code> (เว้นว่าง <code>MAIL_FROM</code> = ส่งจากบัญชีเจ้าของสคริปต์)'],
 ])}
 <p>ถ้าค่าภาคเรียนในชีตถูกแปลงเป็นวันที่ (Google Sheets ทำเช่นนี้กับ “1/2569”) ระบบอ่านกลับเป็น “1/2569” ให้เสมอ และ <code>setup()</code> ซ่อมค่าที่ถูกแปลงแล้ว</p>
@@ -258,9 +251,6 @@ table.plain{font-size:10pt;line-height:1.55} table.plain td{padding:4pt 9pt}
 .b-confirmed{background:var(--sage);color:var(--sage-ink)} .b-reported{background:var(--destructive);color:#fff}
 .b-pending{background:#E5E7EB;color:#374151} .b-stale{background:#fff;border:1px solid var(--line);color:var(--muted)}
 
-.mail{border:1px solid var(--line);border-radius:12px;margin:0 0 10pt;overflow:hidden;break-inside:avoid;font-size:10.5pt}
-.mh{padding:6pt 13pt;border-bottom:1px solid var(--line);background:var(--soft)} .mh span{display:inline-block;width:18mm;color:var(--muted)}
-.mb{padding:10pt 13pt;white-space:pre-wrap;line-height:1.75}
 ol.check{padding-left:1.4em} ol.check li{margin-bottom:6pt}
 `;
 

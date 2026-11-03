@@ -32,7 +32,8 @@ const CONFIG_DEFAULTS = {
   MAIL_SENDER_NAME: 'ระบบตรวจสอบชั่วโมง TA',
   MAIL_FROM: 'polsci.ecwp@gmail.com',      // Send-as alias on the script owner's Gmail (same sender as e-EXAM); blank = owner's own address
   MAIL_REPLY_TO: 'polsci.ecwp@gmail.com',
-  NOTIFY_EMAIL: true,        // email staff when a student reports
+  NOTIFY_EMAIL: true,        // email when a student reports
+  NOTIFY_TO: 'rungtiwa.p@cmu.ac.th',   // who gets it (comma separated); blank = everyone in the Staff tab
   OTP_TTL_MIN: 10,
   OTP_MAX_TRIES: 5,
   OTP_RESEND_SEC: 60,

@@ -91,37 +91,64 @@ function sendMail_(to, subject, body, htmlBody) {
 
 const escHtml_ = t => String(t).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
+const MAIL_FONT_ = "font-family:'Noto Sans Thai','Sarabun',Tahoma,'Leelawadee UI','Thonburi',Arial,sans-serif;";
+
 /**
- * OTP email in the app's own look: dark green frame, leaf mark, white card, accent badge.
+ * Shared look of every email we send: dark green frame, leaf mark, white card, faculty footer.
  * Mail clients strip <style>, web fonts and most images, so this is table layout with inline
  * styles only and system Thai fonts. The light card keeps it readable when a client auto-darkens.
  */
-function otpHtml_(code, c) {
-  const font = "font-family:'Noto Sans Thai','Sarabun',Tahoma,'Leelawadee UI','Thonburi',Arial,sans-serif;";
-  const title = escHtml_(c.TITLE), faculty = escHtml_(c.FACULTY), min = escHtml_(c.OTP_TTL_MIN);
+function mailFrame_(cardHtml, preheader, c) {
+  const font = MAIL_FONT_;
   return '<!DOCTYPE html><html lang="th"><body style="margin:0;padding:0;background:#1A2E24;">' +
-    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#1A2E24;">รหัส OTP ของคุณคือ ' + code + ' ใช้ได้ภายใน ' + min + ' นาที</div>' +
+    '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#1A2E24;">' + escHtml_(preheader) + '</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#1A2E24;"><tr><td align="center" style="padding:28px 16px;">' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;">' +
-      // brand row
       '<tr><td style="padding:0 4px 16px;' + font + '">' +
         '<table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
           '<td width="22" height="22" style="width:22px;height:22px;background:#7CB87A;border-radius:2px 14px 2px 14px;font-size:0;line-height:0;">&nbsp;</td>' +
-          '<td style="padding-left:10px;color:#FFFFFF;font-size:15px;font-weight:700;line-height:1.5;' + font + '">' + title + '</td>' +
+          '<td style="padding-left:10px;color:#FFFFFF;font-size:15px;font-weight:700;line-height:1.5;' + font + '">' + escHtml_(c.TITLE) + '</td>' +
         '</tr></table></td></tr>' +
-      // card
-      '<tr><td style="background:#FFFFFF;border-radius:16px;padding:32px 28px;' + font + 'color:#1A1A1A;">' +
-        '<p style="margin:0 0 4px;font-size:22px;font-weight:700;line-height:1.5;color:#1A1A1A;">รหัส OTP ของคุณ</p>' +
-        '<p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#5B6770;">กรอกรหัสนี้ในหน้าเข้าสู่ระบบเพื่อดูและยืนยันชั่วโมง TA</p>' +
-        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="background:#F3F4F6;border-radius:12px;padding:18px 8px;">' +
-          '<span style="font-size:38px;font-weight:700;line-height:1.3;letter-spacing:10px;color:#1A2E24;padding-left:10px;">' + code + '</span>' +
-        '</td></tr></table>' +
-        '<p style="margin:20px 0 0;"><span style="display:inline-block;background:#7CB87A;color:#0F1A14;border-radius:9999px;padding:5px 14px;font-size:13px;font-weight:700;line-height:1.5;">ใช้ได้ภายใน ' + min + ' นาที</span> <span style="font-size:13px;color:#5B6770;">และใช้ได้ครั้งเดียว</span></p>' +
-        '<p style="margin:20px 0 0;font-size:14px;line-height:1.8;color:#5B6770;">อย่าบอกรหัสนี้กับผู้อื่น แม้จะอ้างว่าเป็นเจ้าหน้าที่<br>หากคุณไม่ได้ขอรหัส ให้ละเว้นอีเมลนี้ได้เลย</p>' +
-      '</td></tr>' +
-      // footer
-      '<tr><td align="center" style="padding:18px 8px 0;font-size:12px;line-height:1.7;color:#C8D4CC;' + font + '">' + faculty + '</td></tr>' +
+      '<tr><td style="background:#FFFFFF;border-radius:16px;padding:32px 28px;' + font + 'color:#1A1A1A;">' + cardHtml + '</td></tr>' +
+      '<tr><td align="center" style="padding:18px 8px 0;font-size:12px;line-height:1.7;color:#C8D4CC;' + font + '">' + escHtml_(c.FACULTY) + '</td></tr>' +
     '</table></td></tr></table></body></html>';
+}
+
+/** OTP email. */
+function otpHtml_(code, c) {
+  const min = escHtml_(c.OTP_TTL_MIN);
+  const card =
+    '<p style="margin:0 0 4px;font-size:22px;font-weight:700;line-height:1.5;color:#1A1A1A;">รหัส OTP ของคุณ</p>' +
+    '<p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#5B6770;">กรอกรหัสนี้ในหน้าเข้าสู่ระบบเพื่อดูและยืนยันชั่วโมง TA</p>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="background:#F3F4F6;border-radius:12px;padding:18px 8px;">' +
+      '<span style="font-size:38px;font-weight:700;line-height:1.3;letter-spacing:10px;color:#1A2E24;padding-left:10px;">' + code + '</span>' +
+    '</td></tr></table>' +
+    '<p style="margin:20px 0 0;"><span style="display:inline-block;background:#7CB87A;color:#0F1A14;border-radius:9999px;padding:5px 14px;font-size:13px;font-weight:700;line-height:1.5;">ใช้ได้ภายใน ' + min + ' นาที</span> <span style="font-size:13px;color:#5B6770;">และใช้ได้ครั้งเดียว</span></p>' +
+    '<p style="margin:20px 0 0;font-size:14px;line-height:1.8;color:#5B6770;">อย่าบอกรหัสนี้กับผู้อื่น แม้จะอ้างว่าเป็นเจ้าหน้าที่<br>หากคุณไม่ได้ขอรหัส ให้ละเว้นอีเมลนี้ได้เลย</p>';
+  return mailFrame_(card, 'รหัส OTP ของคุณคือ ' + code + ' ใช้ได้ภายใน ' + c.OTP_TTL_MIN + ' นาที', c);
+}
+
+/** "A student reported their hours" email to staff. Everything the student typed is escaped. */
+function notifyHtml_(user, rec, url, c) {
+  const row = (k, v, bold) => '<tr><td style="padding:5px 12px 5px 0;font-size:14px;line-height:1.6;color:#5B6770;white-space:nowrap;">' + k +
+    '</td><td style="padding:5px 0;font-size:15px;line-height:1.6;color:#1A1A1A;' + (bold ? 'font-weight:700;' : '') + '">' + v + '</td></tr>';
+  const detail = escHtml_(rec.detail).replace(/\r?\n/g, '<br>');
+  const button = /^https:\/\//.test(url || '')
+    ? '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 0;"><tr><td bgcolor="#2563EB" style="background:#2563EB;border-radius:9999px;">' +
+      '<a href="' + escHtml_(url) + '" style="display:inline-block;padding:12px 26px;font-size:15px;font-weight:700;line-height:1.4;color:#FFFFFF;text-decoration:none;border-radius:9999px;' + MAIL_FONT_ + '">เปิดระบบและกด “รับทราบ”</a>' +
+      '</td></tr></table>'
+    : '';
+  const card =
+    '<p style="margin:0 0 14px;"><span style="display:inline-block;background:#B84A3A;color:#FFFFFF;border-radius:9999px;padding:4px 14px;font-size:13px;font-weight:700;line-height:1.5;">รายงานใหม่</span></p>' +
+    '<p style="margin:0 0 16px;font-size:21px;font-weight:700;line-height:1.5;color:#1A1A1A;">นักศึกษารายงานว่าชั่วโมง TA ไม่ถูกต้อง</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 18px;">' +
+      row('ชื่อ', escHtml_(user.name), true) + row('รหัสนักศึกษา', escHtml_(rec.student_id)) + row('ภาคเรียน', escHtml_(rec.term)) +
+      row('ชั่วโมงรวมในระบบ', escHtml_(rec.hours_seen) + ' ชั่วโมง', true) +
+    '</table>' +
+    '<p style="margin:0 0 6px;font-size:14px;color:#5B6770;">ข้อความจากนักศึกษา</p>' +
+    '<div style="background:#F3F4F6;border-radius:12px;padding:14px 16px;font-size:15px;line-height:1.8;color:#1A1A1A;">' + detail + '</div>' +
+    button;
+  return mailFrame_(card, user.name + ' (' + rec.student_id + ') รายงานชั่วโมง TA ไม่ถูกต้อง', c);
 }
 
 /** Check the code; on success return a session token. */

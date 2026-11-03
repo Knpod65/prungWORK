@@ -37,6 +37,11 @@ export const SHOTS = [
   },
   {
     id: 'email-otp', w: 560, kind: 'email', marks: [],
+    emailExpr: 'otpHtml_("482916", cfg_())',
+  },
+  {
+    id: 'email-notify', w: 560, kind: 'email', marks: [],
+    emailExpr: 'notifyHtml_({ name: "สมหญิง รักเรียน" }, { student_id: "691910001", term: "1/2569", hours_seen: 80, detail: "รอบที่ 2 ควรเป็น 50 ชั่วโมง เพราะมีงานสอนเพิ่มเติมเมื่อ 10–14 ก.ย." }, "https://script.google.com/macros/s/EXAMPLE/exec", cfg_())',
   },
   {
     id: 'b-code', w: 920, scn: { role: 'student', token: false },
