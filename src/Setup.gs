@@ -66,18 +66,7 @@ function importHours() {
     });
   });
 
-  withLock_(() => {
-    const students = rows_(TAB.STUDENT);
-    const known = {};
-    students.forEach(s => { known[id_(s.student_id)] = s; });
-    Object.keys(people).forEach(sid => {
-      if (known[sid]) known[sid].name = people[sid];
-      else students.push({ student_id: sid, name: people[sid], email: '' });
-    });
-    rewrite_(TAB.STUDENT, students);
-    // replace this term's hours for the imported students only; other students/terms untouched
-    rewrite_(TAB.HOURS, rows_(TAB.HOURS).filter(h => !(String(h.term) === term && people[id_(h.student_id)])).concat(hours));
-  });
+  applyHours_(term, people, hours);
   log_('importHours: ' + Object.keys(people).length + ' students, ' + hours.length + ' hour rows (term ' + term + ')');
 }
 
@@ -89,6 +78,29 @@ function importRoster() {
   const mail = {};
   rows.forEach(r => { const e = norm_(r[iMail]); if (e) mail[id_(r[iId])] = e; });
 
+  const missing = applyEmails_(mail);
+  log_('importRoster: ' + (rows_(TAB.STUDENT).length - missing.length) + ' emails set' +
+    (missing.length ? '; NO email for: ' + missing.join(', ') : '') +
+    '. You can now delete the "' + IMPORT_TAB.ROSTER + '" tab.');
+}
+
+/** people: {id: name}; hours: [{term, student_id, round, hours}]. Replaces this term's hours for those students only. */
+function applyHours_(term, people, hours) {
+  withLock_(() => {
+    const students = rows_(TAB.STUDENT);
+    const known = {};
+    students.forEach(s => { known[id_(s.student_id)] = s; });
+    Object.keys(people).forEach(sid => {
+      if (known[sid]) known[sid].name = people[sid];
+      else students.push({ student_id: sid, name: people[sid], email: '' });
+    });
+    rewrite_(TAB.STUDENT, students);
+    rewrite_(TAB.HOURS, rows_(TAB.HOURS).filter(h => !(String(h.term) === term && people[id_(h.student_id)])).concat(hours));
+  });
+}
+
+/** mail: {id: email}. Returns ids that have no email. */
+function applyEmails_(mail) {
   const missing = [];
   withLock_(() => {
     const students = rows_(TAB.STUDENT);
@@ -98,9 +110,7 @@ function importRoster() {
     });
     rewrite_(TAB.STUDENT, students);
   });
-  log_('importRoster: ' + (rows_(TAB.STUDENT).length - missing.length) + ' emails set' +
-    (missing.length ? '; NO email for: ' + missing.join(', ') : '') +
-    '. You can now delete the "' + IMPORT_TAB.ROSTER + '" tab.');
+  return missing;
 }
 
 function log_(msg) { console.log(msg); Logger.log(msg); }

@@ -2,3 +2,4 @@ node_modules/
 .clasprc.json
 seed/
 *.xlsx
+src/SeedData.gs
