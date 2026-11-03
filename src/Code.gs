@@ -6,7 +6,7 @@ function doGet() {
     const t = HtmlService.createTemplateFromFile('index');
     t.boot = JSON.stringify({
       title: c.TITLE, faculty: c.FACULTY, term: c.TERM,
-      otpMin: c.OTP_TTL_MIN, minChars: c.REPORT_MIN_CHARS,
+      otpMin: c.OTP_TTL_MIN, resendSec: c.OTP_RESEND_SEC, sender: c.MAIL_SENDER_NAME, minChars: c.REPORT_MIN_CHARS,
     }).replace(/</g, '\\u003c');
     return t.evaluate()
       .setTitle(c.TITLE)

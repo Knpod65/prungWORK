@@ -33,10 +33,29 @@ h1 .em path{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;s
 .err{min-height:22px;font-size:14px;color:#F2B8AE}
 .hint{font-size:14px;color:var(--muted-fg)}
 
+/* OTP step (patterns from e-EXAM's login, kept in this theme) */
+.otp-form{gap:14px;text-align:left}
+.otp-delivery{display:grid;gap:4px;padding:13px 16px;border:1px solid var(--border);border-radius:14px;background:var(--muted)}
+.otp-delivery span{font-size:13px;color:var(--muted-fg)}
+.otp-delivery strong{font-size:16px;overflow-wrap:anywhere}
+.fl{font-size:14px;font-weight:600;margin-bottom:-6px}
+.otp-countdown{min-height:24px;margin:-6px 0 -2px;font-size:14px;color:var(--muted-fg);text-align:center;font-variant-numeric:tabular-nums}
+.otp-countdown.expired{color:#F2B8AE}
+.note{min-height:22px;font-size:14px;text-align:center;margin:-4px 0}
+.note .ok{color:var(--accent)} .note .bad{color:#F2B8AE}
+.otp-actions{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.otp-actions .linkbtn{text-decoration:none;color:var(--accent);font-weight:600}
+.otp-actions .linkbtn:hover:not(:disabled){text-decoration:underline}
+.otp-actions .linkbtn:disabled{color:#9FB0A6;cursor:not-allowed;font-weight:400}
+.otp-help{padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--muted);color:var(--muted-fg);font-size:14px;line-height:1.7}
+.otp-help strong{color:#fff}
+.otp-security{font-size:13px;line-height:1.7;color:var(--muted-fg);text-align:center}
+
 /* controls: pills, flat, no shadows */
 input,textarea{font:inherit;color:var(--card-fg);background:var(--card);border:1px solid var(--input);width:100%}
 input{height:44px;border-radius:9999px;padding:12px 18px}
-input.otp{text-align:center;font-size:24px;letter-spacing:.5em;font-weight:600}
+input.otp{height:62px;text-align:center;font-size:26px;letter-spacing:.45em;text-indent:.45em;font-weight:700;font-variant-numeric:tabular-nums}
+input::placeholder,textarea::placeholder{color:#6B7780;opacity:1}
 textarea{border-radius:16px;padding:12px 16px;min-height:110px;resize:vertical}
 input,textarea{caret-color:var(--primary)}
 input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px #fff}
@@ -105,7 +124,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .detail{grid-column:1/-1;background:var(--soft);border-radius:12px;padding:12px 16px;font-size:14px}
 .detail p{margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere}
 
-.spin{width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+.spin{width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;flex:none;border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (max-width:720px){
   .who span{display:none} .pill{white-space:nowrap} .brand{font-size:14px}

@@ -27,10 +27,11 @@
         .withFailureHandler(() => res({ ok: false, code: 'NETWORK' }))[fn](...args);
     });
   }
-  async function busy(btn, work) {
+  async function busy(btn, work, label) {
     const old = btn.innerHTML, w = btn.offsetWidth; btn.style.minWidth = w + 'px'; btn.disabled = true; btn.setAttribute('aria-busy', 'true');
-    btn.innerHTML = '<span class="spin" role="status" aria-label="กำลังดำเนินการ"></span>';
-    try { return await work(); } finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.style.minWidth = ''; btn.innerHTML = old; }
+    btn.innerHTML = '<span class="spin" aria-hidden="true"></span>' + (label ? esc(label) : '');
+    if (!label) btn.setAttribute('aria-label', 'กำลังดำเนินการ');
+    try { return await work(); } finally { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.removeAttribute('aria-label'); btn.style.minWidth = ''; btn.innerHTML = old; }
   }
 
   $('#brand').textContent = BOOT.title + ' · ' + BOOT.term;
@@ -45,13 +46,25 @@
   // ---- login -------------------------------------------------------------
   const oval = '<svg viewBox="0 0 200 80" preserveAspectRatio="none" aria-hidden="true"><path d="M22 42 C14 14 150 2 184 26 C204 52 96 80 30 60 C8 52 26 28 70 18"/></svg>';
 
+  const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const clock = sec => { sec = Math.max(0, Math.ceil(sec)); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); };
+  let otpTimers = [];
+  const clearOtp = () => { otpTimers.forEach(clearInterval); otpTimers = []; };
+  /** Runs fn now and every second until it returns false or its element leaves the page. */
+  function every(el, fn) {
+    const tick = () => { if (!document.body.contains(el) || fn() === false) { clearInterval(id); } };
+    const id = setInterval(tick, 1000); otpTimers.push(id); tick();
+  }
+
   function renderEmail(note) {
+    clearOtp();
     app.innerHTML = `
       <section class="hero">
         <h1>ตรวจสอบ<span class="em">ชั่วโมง${oval}</span> TA<br>ของคุณ</h1>
         <p class="lead">เข้าสู่ระบบด้วยอีเมล @cmu.ac.th เราจะส่งรหัส OTP ไปให้</p>
         <form class="form" id="f" novalidate>
-          <input id="email" type="email" aria-label="อีเมลมหาวิทยาลัย" inputmode="email" autocomplete="email" placeholder="อีเมลมหาวิทยาลัย" required>
+          <input id="email" type="email" aria-label="อีเมลมหาวิทยาลัย" inputmode="email" autocomplete="email" placeholder="name@cmu.ac.th" required>
+          <small class="hint">ใช้อีเมลที่ได้รับสิทธิ์ในระบบ ไม่ต้องใช้รหัสผ่าน CMU</small>
           <button class="pill pill-primary" type="submit">รับรหัส OTP</button>
           <div class="err" id="err" role="alert">${esc(note || '')}</div>
         </form>
@@ -59,31 +72,70 @@
     const f = $('#f'), email = $('#email'); email.focus();
     f.onsubmit = async e => {
       e.preventDefault();
-      const r = await busy(f.querySelector('button'), () => api('apiRequestOtp', email.value));
-      if (r.ok) renderCode(email.value.trim().toLowerCase());
+      const v = email.value.trim().toLowerCase();
+      if (!EMAIL_OK.test(v)) { $('#err').textContent = msg('BAD_EMAIL'); email.focus(); return; }
+      const r = await busy(f.querySelector('button'), () => api('apiRequestOtp', v), 'กำลังส่ง…');
+      if (r.ok) renderCode(v, 'ส่งรหัสแล้ว กรุณาตรวจอีเมลและกรอกรหัส 6 หลัก');
       else $('#err').textContent = msg(r.code);
     };
   }
 
-  function renderCode(email) {
+  // OTP step: delivery box, big code field, expiry countdown, resend with cooldown, help, scam warning.
+  function renderCode(email, okNote) {
+    clearOtp();
     app.innerHTML = `
       <section class="hero">
         <h1>กรอก<span class="em">รหัส${oval}</span> OTP</h1>
-        <p class="lead">หากอีเมล <b>${esc(email)}</b> อยู่ในระบบ เราได้ส่งรหัส 6 หลักไปแล้ว (ใช้ได้ ${BOOT.otpMin} นาที) ตรวจสอบกล่องจดหมายและจดหมายขยะ หากไม่ได้รับ โปรดติดต่อเจ้าหน้าที่</p>
-        <form class="form" id="f" novalidate>
-          <input id="code" class="otp" aria-label="รหัส OTP 6 หลัก" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required>
-          <button class="pill pill-primary" type="submit">ยืนยันรหัส</button>
-          <div class="err" id="err" role="alert"></div>
-          <button class="linkbtn hint" type="button" id="back">ใช้อีเมลอื่น / ขอรหัสใหม่</button>
+        <form class="form otp-form" id="f" novalidate>
+          <div class="otp-delivery"><span>หากอีเมลนี้อยู่ในระบบ เราส่งรหัส 6 หลักไปที่</span><strong>${esc(email)}</strong></div>
+          <label class="fl" for="code">กรอกรหัสยืนยัน</label>
+          <input id="code" class="otp" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-describedby="cd help" required>
+          <div id="cd" class="otp-countdown" role="timer">รหัสใช้ได้ ${BOOT.otpMin} นาที</div>
+          <div class="note" id="err" role="alert">${okNote ? '<span class="ok">' + esc(okNote) + '</span>' : ''}</div>
+          <button class="pill pill-primary" id="verify" type="submit">ยืนยันและเข้าสู่ระบบ</button>
+          <div class="otp-actions">
+            <button class="linkbtn" id="resend" type="button">ส่งรหัสใหม่</button>
+            <button class="linkbtn" id="back" type="button">เปลี่ยนอีเมล</button>
+          </div>
+          <div class="otp-help" id="help"><strong>ยังไม่พบอีเมล?</strong><br>รอประมาณ 1–2 นาที แล้วตรวจโฟลเดอร์ Junk/Spam หรือค้นหาคำว่า “${esc(BOOT.sender)}” หากยังไม่ได้รับ โปรดติดต่อเจ้าหน้าที่</div>
+          <div class="otp-security">เพื่อความปลอดภัย เจ้าหน้าที่จะไม่ขอรหัส OTP จากคุณทางโทรศัพท์หรือแชท</div>
         </form>
       </section>`;
-    const f = $('#f'), code = $('#code'); code.focus();
+    const f = $('#f'), code = $('#code'), verify = $('#verify'), resend = $('#resend'), cd = $('#cd'), err = $('#err');
+    code.focus();
+    const say = (text, cls) => { err.innerHTML = text ? `<span class="${cls}">${esc(text)}</span>` : ''; };
+    code.oninput = () => { code.value = code.value.replace(/\D/g, '').slice(0, 6); };
+
+    const expires = Date.now() + BOOT.otpMin * 60000;
+    every(cd, () => {
+      const left = Math.ceil((expires - Date.now()) / 1000);
+      if (left <= 0) {
+        cd.textContent = 'รหัสหมดอายุแล้ว กรุณากด “ส่งรหัสใหม่”'; cd.classList.add('expired'); verify.disabled = true; return false;
+      }
+      cd.textContent = 'รหัสนี้เหลือเวลา ' + clock(left) + ' นาที';
+    });
+    const ready = Date.now() + BOOT.resendSec * 1000;
+    every(resend, () => {
+      const left = Math.ceil((ready - Date.now()) / 1000);
+      if (left <= 0) { resend.disabled = false; resend.textContent = 'ส่งรหัสใหม่'; return false; }
+      resend.disabled = true; resend.textContent = 'ส่งใหม่ได้ใน ' + clock(left);
+    });
+
     $('#back').onclick = () => renderEmail();
+    resend.onclick = async () => {
+      resend.disabled = true; resend.textContent = 'กำลังส่ง…';
+      const r = await api('apiRequestOtp', email);
+      if (r.ok) renderCode(email, 'ส่งรหัสใหม่แล้ว กรุณาใช้รหัสล่าสุดเท่านั้น');
+      else { resend.disabled = false; resend.textContent = 'ส่งรหัสใหม่'; say(msg(r.code), 'bad'); }
+    };
     f.onsubmit = async e => {
       e.preventDefault();
-      const r = await busy(f.querySelector('button'), () => api('apiVerifyOtp', email, code.value));
-      if (r.ok) { saveToken(r.data); boot(); }
-      else { $('#err').textContent = msg(r.code); code.value = ''; code.focus(); }
+      if (verify.disabled) return;
+      if (code.value.length !== 6) { say('กรุณากรอกรหัสยืนยันให้ครบ 6 หลัก', 'bad'); code.focus(); return; }
+      say('');
+      const r = await busy(verify, () => api('apiVerifyOtp', email, code.value), 'กำลังตรวจสอบ…');
+      if (r.ok) { clearOtp(); saveToken(r.data); boot(); }
+      else { say(msg(r.code), 'bad'); code.focus(); code.select(); }
     };
   }
 
