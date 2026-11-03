@@ -3,3 +3,4 @@ node_modules/
 seed/
 *.xlsx
 src/SeedData.gs
+docs/manual-v2/build/

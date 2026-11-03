@@ -1,0 +1,278 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>คู่มือระบบตรวจสอบชั่วโมง TA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1A1A1A;--muted:#5B6770;--green:#1A2E24;--sage:#7CB87A;--sage-ink:#0F1A14;--soft:#F3F4F6;--line:#D9DEE2;--destructive:#B84A3A;--mark:#F59E0B}
+@page{size:A4;margin:17mm 16mm 20mm;
+  @bottom-center{content:"คู่มือระบบตรวจสอบชั่วโมง TA  ·  หน้า " counter(page);font:9pt 'Noto Sans Thai','Sarabun',sans-serif;color:var(--muted)}}
+*{box-sizing:border-box}
+html{font:11pt/1.8 'Noto Sans Thai','Sarabun','Thonburi',Tahoma,sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;max-width:178mm}
+p{margin:0 0 9pt;max-width:70ch}
+ul,ol{margin:0 0 10pt;padding-left:1.3em;max-width:70ch} li{margin-bottom:3pt}
+code{font:600 .88em/1 'SF Mono',Menlo,Consolas,monospace;background:var(--soft);border-radius:5px;padding:1.5pt 5pt}
+a{color:inherit;text-decoration:none}
+
+.cover h1{font-size:28pt;line-height:1.35;margin:0 0 6pt;font-weight:700;color:var(--green)}
+.cover .lead{font-size:13.2pt;line-height:1.75;color:#2d3a33;max-width:none;margin-bottom:12pt}
+.cover .ver{font-size:9pt;color:var(--muted);margin:14pt 0 0}
+.toc{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin:14pt 0 0;padding:14pt 0 0;border-top:1px solid var(--line)}
+.toc h2{font-size:13.2pt;margin:0 0 4pt;color:var(--green)} .toc h2:not(:first-child){margin-top:12pt}
+.toc ol{list-style:none;padding:0;margin:0;font-size:10.5pt} .toc li{margin:0 0 2pt}
+
+.part{background:var(--green);color:#fff;border-radius:14px;padding:9pt 16pt;font-size:18pt;font-weight:700;margin:20pt 0 10pt;break-before:page;break-after:avoid}
+.cover + .part{break-before:page}
+p.keep{break-after:avoid}
+figure.w72{width:72%;margin-inline:auto}
+.side{display:grid;grid-template-columns:1fr 50mm;gap:10mm;align-items:start}
+.side figure{margin:0}
+.side .legend{margin-top:6pt}
+h3.step{display:flex;align-items:center;gap:9pt;font-size:16pt;line-height:1.4;margin:16pt 0 6pt;break-after:avoid}
+.stepno{flex:none;background:var(--sage);color:var(--sage-ink);border-radius:999px;padding:1pt 11pt;font-size:10pt;font-weight:700;line-height:1.7}
+h4{font-size:13.2pt;margin:14pt 0 4pt;color:var(--green);break-after:avoid}
+
+.note{break-after:avoid;background:#EEF5EE;border-radius:12px;padding:8pt 13pt;margin:0 0 10pt;font-size:10.5pt;line-height:1.7;break-inside:avoid}
+.note.warn{background:#FBEDEA}
+.tag{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:0 7pt;font-size:8.5pt;line-height:1.6;font-weight:600;color:#374151;white-space:nowrap}
+.n{display:inline-flex;align-items:center;justify-content:center;width:17pt;height:17pt;border-radius:50%;background:var(--mark);color:#1A1A1A;font:700 9.5pt/1 'Inter',sans-serif;vertical-align:middle}
+
+.screen{break-inside:avoid;margin:0 0 12pt}
+figure{margin:0 0 7pt} figure img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--line)}
+figure.narrow{width:68%;margin-inline:auto} figure.phone{width:50mm;margin-inline:auto}
+figcaption{font-size:9.5pt;color:var(--muted);text-align:center;margin-top:5pt}
+figure.phone figcaption{text-align:left}
+.legend{list-style:none;margin:0;padding:0;font-size:10pt;color:var(--ink)} .legend li{margin:2pt 0;display:flex;gap:6pt;align-items:center}
+
+table{width:100%;border-collapse:collapse;font-size:10.5pt;line-height:1.6}
+th{background:var(--soft);text-align:left;font-size:9.5pt;font-weight:700;color:#374151;padding:5pt 9pt}
+td{padding:6pt 9pt;vertical-align:top;border-top:1px solid var(--line)}
+tr{break-inside:avoid}
+.callouts .c1{width:13mm;text-align:center} .callouts .c2{width:60mm}
+table.plain td.k{width:58mm;font-weight:600}
+table.plain{font-size:10pt;line-height:1.55} table.plain td{padding:4pt 9pt}
+.screen.flow{break-inside:auto} .screen.flow figure{break-inside:avoid}
+.badge{display:inline-flex;border-radius:999px;padding:0 9pt;font-size:9pt;font-weight:700;line-height:1.7}
+.b-confirmed{background:var(--sage);color:var(--sage-ink)} .b-reported{background:var(--destructive);color:#fff}
+.b-pending{background:#E5E7EB;color:#374151} .b-stale{background:#fff;border:1px solid var(--line);color:var(--muted)}
+
+.mail{border:1px solid var(--line);border-radius:12px;margin:0 0 10pt;overflow:hidden;break-inside:avoid;font-size:10.5pt}
+.mh{padding:6pt 13pt;border-bottom:1px solid var(--line);background:var(--soft)} .mh span{display:inline-block;width:18mm;color:var(--muted)}
+.mb{padding:10pt 13pt;white-space:pre-wrap;line-height:1.75}
+ol.check{padding-left:1.4em} ol.check li{margin-bottom:6pt}
+</style></head><body>
+<header class="cover">
+  <h1>คู่มือใช้งานระบบตรวจสอบชั่วโมง TA</h1>
+  <p class="lead">ระบบนี้ให้นักศึกษา TA ล็อกอินด้วยรหัส OTP ทางอีเมล @cmu.ac.th เพื่อดูชั่วโมงของตนเอง แล้วกด <b>ยืนยัน</b> หรือ <b>รายงาน</b> ว่าไม่ถูกต้อง
+    ส่วนเจ้าหน้าที่ดูสถานะของนักศึกษาทุกคนและได้รับอีเมลแจ้งเตือนเมื่อมีรายงาน ใช้ได้ทั้งมือถือและคอมพิวเตอร์ ไม่ต้องสมัครสมาชิกหรือตั้งรหัสผ่าน</p>
+  <div class="note"><b>วิธีอ่านภาพ</b> ภาพในคู่มือใช้<b>ข้อมูลสมมติ</b> (ชื่อ รหัส และอีเมลไม่ใช่ของจริง) กรอบสีส้มที่มีตัวเลข <span class="n">1</span> คือจุดที่อธิบายไว้ในตารางใต้ภาพ
+    ป้าย <span class="tag">กรอกได้</span> <span class="tag">กดได้</span> <span class="tag">ดูอย่างเดียว</span> บอกว่าจุดนั้นทำอะไรได้</div>
+  <nav class="toc" aria-label="สารบัญ">
+    <div>
+      <h2>ส่วนที่ 1 สำหรับนักศึกษา TA</h2>
+      <ol>
+        <li><a href="#s1">เปิดลิงก์และกรอกอีเมล</a></li>
+        <li><a href="#s2">เปิดอีเมลและดูรหัส OTP</a></li>
+        <li><a href="#s3">กรอกรหัส OTP</a></li>
+        <li><a href="#s4">ตรวจชั่วโมงของคุณ</a>: ยืนยัน หรือรายงาน</li>
+        <li><a href="#s5">เมื่อชั่วโมงถูกปรับหลังคุณตอบ</a></li>
+        <li><a href="#s6">ใช้บนมือถือ</a> · <a href="#s7">แก้ปัญหาที่พบบ่อย</a></li>
+      </ol>
+    </div>
+    <div>
+      <h2>ส่วนที่ 2 สำหรับเจ้าหน้าที่</h2>
+      <ol>
+        <li><a href="#t1">หน้าแดชบอร์ด</a></li>
+        <li><a href="#t2">ดูและรับทราบรายงาน</a></li>
+        <li><a href="#t3">ค้นหาและกรอง</a> · <a href="#t4">ใช้บนมือถือ</a></li>
+        <li><a href="#t5">อีเมลแจ้งเตือนเมื่อมีรายงาน</a></li>
+      </ol>
+      <h2>ส่วนที่ 3 สำหรับผู้ดูแลระบบ</h2>
+      <ol>
+        <li><a href="#u1">งานประจำในชีต (ไม่ต้องแก้โค้ด)</a></li>
+        <li><a href="#u2">ก่อนเปิดให้ TA ใช้</a></li>
+      </ol>
+    </div>
+  </nav>
+  <p class="ver">ตรงกับระบบ ณ วันที่ 3 พฤศจิกายน 2569 · รหัสเวอร์ชัน 4e14309</p>
+</header>
+
+<div class="part">ส่วนที่ 1 สำหรับนักศึกษา TA</div>
+
+<h3 class="step" id="s1"><span class="stepno">ขั้นที่ 1</span>เปิดลิงก์และกรอกอีเมล</h3>
+<p class="keep">เปิดลิงก์ที่เจ้าหน้าที่ส่งให้ จะพบหน้าเข้าสู่ระบบ จุดที่กรอกได้มีช่องเดียว คือช่องอีเมล</p>
+<section class="screen">
+    <figure class="w72"><img class="" src="img/a-email.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ช่องอีเมล</b> <span class="tag">กรอกได้</span></td><td class="c3">ใส่อีเมลมหาวิทยาลัยของคุณ (…@cmu.ac.th) ต้องเป็นอีเมลที่ลงทะเบียนไว้กับเจ้าหน้าที่</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>ปุ่ม “รับรหัส OTP”</b> <span class="tag">กดได้</span></td><td class="c3">ระบบส่งรหัส 6 หลักไปที่อีเมลนั้น</td></tr></tbody></table>
+  </section>
+<p>ใช้อีเมลของตนเองเท่านั้น หากอีเมลไม่อยู่ในรายชื่อ ระบบจะไม่ส่งรหัสให้ (และไม่บอกว่าอีเมลนั้นมีหรือไม่มีในระบบ) ให้ติดต่อเจ้าหน้าที่</p>
+
+<h3 class="step" id="s2"><span class="stepno">ขั้นที่ 2</span>เปิดอีเมลและดูรหัส OTP</h3>
+<p class="keep">ตรวจกล่องจดหมายของคุณ ภายในประมาณ 1–2 นาทีจะได้อีเมลหน้าตาแบบนี้</p>
+<section class="screen"><figure class="narrow"><img class="" src="img/email-otp.png" alt=""><figcaption>อีเมลรหัส OTP (ตัวอย่าง)</figcaption></figure></section>
+<ul>
+  <li>รหัสเป็นตัวเลข 6 หลัก <b>ใช้ได้ 10 นาที และใช้ได้ครั้งเดียว</b></li>
+  <li>ถ้าไม่เจอ ให้ดูในโฟลเดอร์ Junk/Spam หรือค้นหาชื่อผู้ส่ง “ระบบตรวจสอบชั่วโมง TA”</li>
+  <li><b>อย่าบอกรหัสนี้กับใคร</b> เจ้าหน้าที่จะไม่ขอรหัส OTP ทางโทรศัพท์หรือแชท</li>
+</ul>
+
+<h3 class="step" id="s3"><span class="stepno">ขั้นที่ 3</span>กรอกรหัส OTP</h3>
+<p class="keep">กลับมาที่หน้าเว็บ หน้าจอเปลี่ยนเป็นหน้ากรอกรหัสโดยอัตโนมัติ</p>
+<section class="screen">
+    <figure class="w72"><img class="" src="img/b-code.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ช่องรหัส 6 หลัก</b> <span class="tag">กรอกได้</span></td><td class="c3">พิมพ์ตัวเลขจากอีเมล พิมพ์ได้เฉพาะตัวเลข ไม่ต้องเว้นวรรค</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>เวลานับถอยหลัง</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">บอกเวลาที่รหัสยังใช้ได้ เมื่อหมดเวลา ปุ่มยืนยันจะกดไม่ได้</td></tr><tr><td class="c1"><span class="n">3</span></td>
+      <td class="c2"><b>ปุ่ม “ยืนยันและเข้าสู่ระบบ”</b> <span class="tag">กดได้</span></td><td class="c3">ตรวจรหัสและเข้าสู่ระบบ</td></tr><tr><td class="c1"><span class="n">4</span></td>
+      <td class="c2"><b>ปุ่ม “ส่งรหัสใหม่”</b> <span class="tag">กดได้</span></td><td class="c3">กดได้เมื่อนับถอยหลังครบ 1 นาที ใช้เมื่อรหัสหมดอายุหรือไม่ได้รับอีเมล</td></tr><tr><td class="c1"><span class="n">5</span></td>
+      <td class="c2"><b>ปุ่ม “เปลี่ยนอีเมล”</b> <span class="tag">กดได้</span></td><td class="c3">กลับไปกรอกอีเมลใหม่ ถ้าพิมพ์อีเมลผิด</td></tr><tr><td class="c1"><span class="n">6</span></td>
+      <td class="c2"><b>กล่อง “ยังไม่พบอีเมล?”</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">บอกวิธีหาอีเมลที่ไม่เข้ากล่องจดหมาย</td></tr></tbody></table>
+  </section>
+<ul>
+  <li>ถ้ากรอกผิด ระบบแจ้ง “รหัสไม่ถูกต้อง” และเลือกข้อความในช่องไว้ให้ พิมพ์ทับได้ทันที กรอกผิดได้ 5 ครั้ง หลังจากนั้นรหัสถูกยกเลิก ต้องกด “ส่งรหัสใหม่”</li>
+  <li>รหัสใหม่จะแทนรหัสเก่าเสมอ ให้ใช้รหัสจากอีเมลฉบับล่าสุดเท่านั้น</li>
+</ul>
+
+<h3 class="step" id="s4"><span class="stepno">ขั้นที่ 4</span>ตรวจชั่วโมงของคุณ</h3>
+<p class="keep">เมื่อเข้าสู่ระบบสำเร็จ จะเห็นหน้าสรุปชั่วโมงของคุณ</p>
+<div class="note"><b>ตรวจให้ละเอียดก่อนกด</b> เทียบชั่วโมงรวมกับใบลงเวลาหรือตารางของคุณ แล้วเลือกทางใดทางหนึ่งด้านล่าง</div>
+<section class="screen">
+    <figure class=""><img class="" src="img/c-ask.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ชื่อของคุณ (มุมขวาบน)</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ใช้เช็กว่าเข้าสู่ระบบถูกบัญชี</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>ปุ่ม “ออกจากระบบ”</b> <span class="tag">กดได้</span></td><td class="c3">แนะนำให้กดทุกครั้งเมื่อใช้เครื่องสาธารณะ</td></tr><tr><td class="c1"><span class="n">3</span></td>
+      <td class="c2"><b>ชื่อ-สกุล รหัสนักศึกษา ภาคเรียน</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ตรวจว่าเป็นข้อมูลของคุณ</td></tr><tr><td class="c1"><span class="n">4</span></td>
+      <td class="c2"><b>ชั่วโมงแต่ละรอบ</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">รอบที่ 1, รอบที่ 2 … ตามที่เจ้าหน้าที่บันทึก</td></tr><tr><td class="c1"><span class="n">5</span></td>
+      <td class="c2"><b>ชั่วโมงรวม (กล่องสีเข้ม)</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ตัวเลขที่คุณต้องตรวจ คือผลรวมของทุกรอบ</td></tr><tr><td class="c1"><span class="n">6</span></td>
+      <td class="c2"><b>ปุ่ม “ถูกต้อง ยืนยัน”</b> <span class="tag">กดได้</span></td><td class="c3">กดเมื่อชั่วโมงรวมถูกต้อง</td></tr><tr><td class="c1"><span class="n">7</span></td>
+      <td class="c2"><b>ปุ่ม “ไม่ถูกต้อง รายงาน”</b> <span class="tag">กดได้</span></td><td class="c3">กดเมื่อชั่วโมงไม่ถูกต้อง จะมีช่องให้บอกเจ้าหน้าที่</td></tr></tbody></table>
+  </section>
+
+<h4>ทางที่ 1 ชั่วโมงถูกต้อง: กด “ถูกต้อง ยืนยัน”</h4>
+<p class="keep">ระบบบันทึกการยืนยันพร้อมวันและเวลาทันที</p>
+<section class="screen">
+    <figure class=""><img class="" src="img/c-confirmed.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>สถานะ</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ป้ายสีเขียว “ยืนยันแล้ว” พร้อมวันและเวลาที่ยืนยัน</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>“เปลี่ยนคำตอบ”</b> <span class="tag">กดได้</span></td><td class="c3">กลับไปเลือกใหม่ ถ้ากดผิด</td></tr></tbody></table>
+  </section>
+
+<h4>ทางที่ 2 ชั่วโมงไม่ถูกต้อง: กด “ไม่ถูกต้อง รายงาน”</h4>
+<p class="keep">จะมีช่องให้บอกเจ้าหน้าที่ว่าผิดตรงไหน</p>
+<section class="screen">
+    <figure class=""><img class="" src="img/c-report.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ช่องรายละเอียด</b> <span class="tag">กรอกได้</span></td><td class="c3">พิมพ์ว่าไม่ถูกต้องตรงไหน ยาวได้ไม่เกิน 1,000 ตัวอักษร และต้องมีอย่างน้อย 10 ตัวอักษร</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>ตัวนับตัวอักษร</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">บอกว่าพิมพ์ไปแล้วกี่ตัว</td></tr><tr><td class="c1"><span class="n">3</span></td>
+      <td class="c2"><b>ปุ่ม “ส่งรายงาน”</b> <span class="tag">กดได้</span></td><td class="c3">ส่งถึงเจ้าหน้าที่ทันที</td></tr><tr><td class="c1"><span class="n">4</span></td>
+      <td class="c2"><b>ปุ่ม “ยกเลิก”</b> <span class="tag">กดได้</span></td><td class="c3">ปิดช่องนี้โดยไม่ส่งอะไร</td></tr></tbody></table>
+  </section>
+<div class="note"><b>เขียนให้เจ้าหน้าที่ตรวจต่อได้ง่าย</b> บอกรอบที่ผิด ตัวเลขที่คุณคิดว่าถูกต้อง และเหตุผลหรือวันที่ที่เกี่ยวข้อง</div>
+<p class="keep">เมื่อกด “ส่งรายงาน” ระบบส่งถึงเจ้าหน้าที่ทันที และเจ้าหน้าที่ได้รับอีเมลแจ้งเตือนด้วย</p>
+<section class="screen">
+    <figure class=""><img class="" src="img/c-reported.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>สถานะ</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ป้ายสีแดง “รายงานแล้ว” พร้อมข้อความที่คุณส่ง</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>“เปลี่ยนคำตอบ”</b> <span class="tag">กดได้</span></td><td class="c3">ส่งรายงานใหม่ หรือเปลี่ยนเป็นยืนยัน</td></tr></tbody></table>
+  </section>
+<p>ตอบผิดหรือเปลี่ยนใจ กด “เปลี่ยนคำตอบ” ได้เสมอ ระบบเก็บทุกคำตอบไว้เป็นประวัติ และถือคำตอบล่าสุดเป็นสถานะปัจจุบัน</p>
+
+<h3 class="step" id="s5"><span class="stepno">ขั้นที่ 5</span>เมื่อชั่วโมงถูกปรับหลังคุณตอบ</h3>
+<p class="keep">ถ้าเจ้าหน้าที่แก้ชั่วโมงในระบบหลังจากที่คุณยืนยันหรือรายงานไปแล้ว ระบบจะแจ้งและให้คุณตอบใหม่ ส่วนคำถามและปุ่มจะแสดงอยู่เลย</p>
+<section class="screen">
+    <figure class=""><img class="" src="img/c-stale.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ข้อความ “ชั่วโมงถูกปรับปรุงหลังคุณตอบ”</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">บอกชั่วโมงเดิมที่คุณเคยเห็น (ที่นี่คือ 80 ชั่วโมง)</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>ชั่วโมงรวมใหม่</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ตัวเลขล่าสุดในระบบ (ที่นี่คือ 86 ชั่วโมง)</td></tr><tr><td class="c1"><span class="n">3</span></td>
+      <td class="c2"><b>ปุ่ม “ถูกต้อง ยืนยัน”</b> <span class="tag">กดได้</span></td><td class="c3">ยืนยันตัวเลขใหม่</td></tr><tr><td class="c1"><span class="n">4</span></td>
+      <td class="c2"><b>ปุ่ม “ไม่ถูกต้อง รายงาน”</b> <span class="tag">กดได้</span></td><td class="c3">รายงานอีกครั้งถ้ายังไม่ถูกต้อง</td></tr></tbody></table>
+  </section>
+
+<h3 class="step" id="s6"><span class="stepno">ใช้บนมือถือ</span>หน้าตาเหมือนกัน ปุ่มเรียงลงมา</h3>
+<section class="screen side"><div><p>หน้าจอเรียงเป็นแนวตั้ง ปุ่มกว้างเต็มแถว กดง่ายด้วยนิ้ว ทุกปุ่มสูงอย่างน้อย 44 พิกเซล</p><ol class="legend"><li><span class="n">1</span> “ถูกต้อง ยืนยัน”</li><li><span class="n">2</span> “ไม่ถูกต้อง รายงาน”</li><li><span class="n">3</span> “ออกจากระบบ”</li></ol></div>
+<figure class="phone"><img class="" src="img/c-mobile.png" alt=""></figure></section>
+
+<h3 class="step" id="s7"><span class="stepno">แก้ปัญหา</span>ปัญหาที่พบบ่อย (นักศึกษา)</h3>
+<table class="plain"><thead><tr><th>ข้อความ / อาการ</th><th>ทำอย่างไร</th></tr></thead><tbody><tr><td class="k">ไม่ได้รับอีเมล OTP</td><td>รอ 1–2 นาที ตรวจ Junk/Spam จากนั้นกด “ส่งรหัสใหม่” (กดได้หลังรอ 1 นาที) ถ้ายังไม่ได้ ตรวจว่าพิมพ์อีเมลถูกและเป็นอีเมลที่ลงทะเบียนไว้ แล้วติดต่อเจ้าหน้าที่</td></tr><tr><td class="k">รหัสไม่ถูกต้อง</td><td>ตรวจตัวเลขอีกครั้ง และใช้รหัสจากอีเมลฉบับล่าสุดเท่านั้น</td></tr><tr><td class="k">รหัสหมดอายุ / กรอกผิดเกินกำหนด</td><td>กด “ส่งรหัสใหม่” แล้วใช้รหัสใหม่</td></tr><tr><td class="k">ขอรหัสบ่อยเกินไป</td><td>รอสักครู่ (ประมาณ 1 นาที) แล้วลองใหม่</td></tr><tr><td class="k">ส่งอีเมลไม่สำเร็จ</td><td>กดขอรหัสใหม่อีกครั้ง ขอใหม่ได้ทันที ถ้ายังไม่ได้ให้ติดต่อเจ้าหน้าที่</td></tr><tr><td class="k">ระบบส่งอีเมลเต็มโควตาของวันนี้</td><td>ลองใหม่พรุ่งนี้ หรือติดต่อเจ้าหน้าที่</td></tr><tr><td class="k">เซสชันหมดอายุ</td><td>เข้าสู่ระบบใหม่ ระบบจำการเข้าสู่ระบบได้ประมาณ 6 ชั่วโมง และเมื่อปิดแท็บจะออกจากระบบ</td></tr><tr><td class="k">ยังไม่มีข้อมูลชั่วโมงของคุณในภาคเรียนนี้</td><td>ข้อมูลของคุณยังไม่ถูกบันทึกในระบบ ติดต่อเจ้าหน้าที่</td></tr><tr><td class="k">ตัวเลขชั่วโมงไม่ตรงกับที่คุณมี</td><td>กด “ไม่ถูกต้อง รายงาน” พร้อมอธิบาย (อย่ากดยืนยัน)</td></tr><tr><td class="k">กดยืนยันหรือรายงานผิด</td><td>กด “เปลี่ยนคำตอบ” แล้วเลือกใหม่</td></tr></tbody></table>
+
+<div class="part">ส่วนที่ 2 สำหรับเจ้าหน้าที่</div>
+<p>เจ้าหน้าที่ใช้ลิงก์เดียวกับนักศึกษา และล็อกอินด้วย OTP แบบเดียวกัน (ขั้นที่ 1–3 ข้างต้น) แต่ใช้อีเมลที่ลงไว้ในแท็บ <code>Staff</code> ของชีต
+เมื่อเข้าสำเร็จจะเห็น<b>แดชบอร์ด</b>แทนหน้านักศึกษา</p>
+
+<h3 class="step" id="t1"><span class="stepno">1</span>หน้าแดชบอร์ด</h3>
+<section class="screen flow">
+    <figure class=""><img class="" src="img/d-dash.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ชื่อผู้ใช้ (มุมขวาบน)</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ใช้เช็กว่าเข้าสู่ระบบถูกบัญชี</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>ปุ่ม “ออกจากระบบ”</b> <span class="tag">กดได้</span></td><td class="c3">แนะนำให้กดเมื่อใช้เครื่องสาธารณะ</td></tr><tr><td class="c1"><span class="n">3</span></td>
+      <td class="c2"><b>แถบสีแดง</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">บอกจำนวนรายงานที่ยังไม่กด “รับทราบ” หายไปเมื่อรับทราบครบ</td></tr><tr><td class="c1"><span class="n">4</span></td>
+      <td class="c2"><b>ปุ่ม “ดูรายการ”</b> <span class="tag">กดได้</span></td><td class="c3">กรองให้เห็นเฉพาะคนที่รายงาน</td></tr><tr><td class="c1"><span class="n">5</span></td>
+      <td class="c2"><b>“ยืนยันแล้ว”</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">จำนวนที่ยืนยันแล้ว จากทั้งหมด</td></tr><tr><td class="c1"><span class="n">6</span></td>
+      <td class="c2"><b>“รายงานไม่ถูกต้อง”</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">นับทุกคนที่รายงาน แม้รับทราบแล้ว (ต่างจากเลขในแถบสีแดง ซึ่งนับเฉพาะที่ยังไม่รับทราบ)</td></tr><tr><td class="c1"><span class="n">7</span></td>
+      <td class="c2"><b>“ยังไม่ตอบ”</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ใช้ตามคนที่ยังไม่ตอบ</td></tr><tr><td class="c1"><span class="n">8</span></td>
+      <td class="c2"><b>ช่องค้นหา</b> <span class="tag">กรอกได้</span></td><td class="c3">พิมพ์ชื่อหรือรหัสนักศึกษา ผลแสดงทันที</td></tr><tr><td class="c1"><span class="n">9</span></td>
+      <td class="c2"><b>ปุ่มกรองสถานะ</b> <span class="tag">กดได้</span></td><td class="c3">ทั้งหมด / รายงาน / ยังไม่ตอบ / ยืนยันแล้ว ปุ่มที่เลือกอยู่เป็นสีเขียวเข้ม</td></tr><tr><td class="c1"><span class="n">10</span></td>
+      <td class="c2"><b>แถวนักศึกษา</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">ชื่อ รหัส ชั่วโมงแต่ละรอบ ชั่วโมงรวม และสถานะพร้อมวันเวลาที่ตอบ แถว “รายงาน” จะแสดงข้อความของนักศึกษา</td></tr></tbody></table>
+  </section>
+<p>ป้ายสถานะ: <span class="badge b-confirmed">ยืนยันแล้ว</span> เขียว · <span class="badge b-reported">รายงาน</span> แดง · <span class="badge b-pending">ยังไม่ตอบ</span> เทา · <span class="badge b-stale">ชม.เปลี่ยน</span> ขอบเทา
+หมายถึงชั่วโมงถูกแก้หลังนักศึกษาตอบ และต้องรอให้ตอบใหม่</p>
+<p>หน้านี้<b>รีเฟรชข้อมูลอัตโนมัติทุก 1 นาที</b>ขณะเปิดแท็บอยู่ และรีเฟรชทันทีเมื่อสลับกลับมาที่แท็บ ชื่อแท็บของเบราว์เซอร์จะแสดงจำนวนรายงานใหม่ เช่น <code>(1) ตรวจสอบชั่วโมง TA</code>
+ทำให้เห็นได้แม้เปิดหน้าอื่นอยู่ การพิมพ์ในช่องค้นหาไม่ถูกขัดจังหวะเมื่อรีเฟรช</p>
+
+<h3 class="step" id="t2"><span class="stepno">2</span>ดูและรับทราบรายงาน</h3>
+<p class="keep">กด “ดูรายการ” (<span class="n">4</span> ในภาพก่อนหน้า) หรือปุ่มกรอง “รายงาน” เพื่อดูเฉพาะรายงาน</p>
+<section class="screen">
+    <figure class=""><img class="" src="img/d-reports.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ปุ่มกรอง “รายงาน”</b> <span class="tag">กดได้</span></td><td class="c3">กดแล้วเห็นเฉพาะคนที่รายงาน</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>ข้อความจากนักศึกษา</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">อ่านว่าผิดตรงไหน</td></tr><tr><td class="c1"><span class="n">3</span></td>
+      <td class="c2"><b>ปุ่ม “รับทราบ”</b> <span class="tag">กดได้</span></td><td class="c3">กดเมื่อคุณเห็นและดำเนินการแล้ว</td></tr><tr><td class="c1"><span class="n">4</span></td>
+      <td class="c2"><b>“รับทราบแล้ว”</b> <span class="tag">ดูอย่างเดียว</span></td><td class="c3">รายงานที่รับทราบไปแล้วจะแสดงข้อความนี้แทนปุ่ม</td></tr></tbody></table>
+  </section>
+<p>หลังกด “รับทราบ” ปุ่มเปลี่ยนเป็นข้อความ “รับทราบแล้ว” และตัวเลขในแถบสีแดงลดลง (เมื่อรับทราบครบ แถบสีแดงหายไป) ระบบบันทึกอีเมลของผู้กดและเวลาไว้ในแท็บ <code>Ack</code></p>
+
+<h3 class="step" id="t3"><span class="stepno">3</span>ค้นหาและกรอง</h3>
+<p class="keep">พิมพ์ในช่องค้นหา ผลจะแสดงทันที ค้นได้ทั้งชื่อและรหัส ใช้ร่วมกับปุ่มกรองได้</p>
+<section class="screen">
+    <figure class=""><img class="" src="img/d-search.png" alt=""></figure>
+    <table class="callouts"><thead><tr><th class="c1">เลข</th><th class="c2">อะไร</th><th class="c3">ทำอะไรได้</th></tr></thead><tbody><tr><td class="c1"><span class="n">1</span></td>
+      <td class="c2"><b>ช่องค้นหา</b> <span class="tag">กรอกได้</span></td><td class="c3">พิมพ์ “สม” เห็นเฉพาะชื่อที่มีคำนี้ ค้นได้ทั้งชื่อและรหัส</td></tr><tr><td class="c1"><span class="n">2</span></td>
+      <td class="c2"><b>ปุ่มกรอง</b> <span class="tag">กดได้</span></td><td class="c3">ใช้ร่วมกับช่องค้นหาได้ เช่น กรอง “ยังไม่ตอบ” แล้วพิมพ์ชื่อ</td></tr></tbody></table>
+  </section>
+
+<h3 class="step" id="t4"><span class="stepno">4</span>ใช้บนมือถือ</h3>
+<section class="screen side"><div><p>แถวรายชื่อเรียงต่อกันเป็นการ์ด ใช้งานได้ครบเหมือนบนคอมพิวเตอร์ ตัวเลขแต่ละช่องมีป้ายนำหน้า เช่น “รอบ 1: 36” “รวม: 86”</p>
+<p>ภาพนี้แสดงเฉพาะส่วนบนของหน้า ที่เหลือเลื่อนลงดูได้</p></div><figure class="phone"><img class="" src="img/d-mobile.png" alt=""></figure></section>
+
+<h3 class="step" id="t5"><span class="stepno">5</span>อีเมลแจ้งเตือนเมื่อมีรายงาน</h3>
+<p>เมื่อนักศึกษากด “ส่งรายงาน” ระบบส่งอีเมลถึง<b>เจ้าหน้าที่ทุกคนในแท็บ <code>Staff</code></b> ดังตัวอย่าง</p>
+<div class="mail">
+  <div class="mh"><span>จาก</span> ระบบตรวจสอบชั่วโมง TA &lt;polsci.ecwp@gmail.com&gt;</div>
+  <div class="mh"><span>หัวเรื่อง</span> <b>[TA 1/2569] นักศึกษารายงานชั่วโมงไม่ถูกต้อง: สมหญิง รักเรียน (691910001)</b></div>
+  <div class="mb">สมหญิง รักเรียน (691910001) รายงานว่าชั่วโมง TA ไม่ถูกต้อง
+ชั่วโมงรวมในระบบ: 80
+
+รายละเอียด:
+รอบที่ 2 ควรเป็น 50 ชั่วโมง เพราะมีงานสอนเพิ่มเติมเมื่อ 10–14 ก.ย.
+
+เปิดระบบ: https://script.google.com/macros/s/…/exec</div>
+</div>
+<p>อีเมลบอกชื่อ รหัส ชั่วโมงรวมในระบบ ข้อความของนักศึกษา และลิงก์เปิดระบบ ปิดการแจ้งเตือนทางอีเมลได้โดยตั้ง <code>NOTIFY_EMAIL</code> เป็น <code>FALSE</code> ในแท็บ <code>Config</code></p>
+
+<div class="part">ส่วนที่ 3 สำหรับผู้ดูแลระบบ</div>
+<h3 class="step" id="u1"><span class="stepno">1</span>งานประจำในชีต (ไม่ต้องแก้โค้ด)</h3>
+<table class="plain"><thead><tr><th>ต้องการ</th><th>ทำที่ไหน</th></tr></thead><tbody><tr><td class="k">เพิ่ม/ลบเจ้าหน้าที่</td><td>แท็บ <code>Staff</code> เพิ่มหรือลบแถว (อีเมล และชื่อ) มีผลทันที และผู้ที่อยู่ในแท็บนี้จะได้รับอีเมลแจ้งเตือนด้วย</td></tr><tr><td class="k">เพิ่มนักศึกษา หรือแก้อีเมลที่รับ OTP</td><td>แท็บ <code>Student</code> (รหัส ชื่อ อีเมล) นักศึกษาที่ไม่มีอีเมลจะเข้าสู่ระบบไม่ได้</td></tr><tr><td class="k">แก้ชั่วโมง</td><td>แท็บ <code>Hours</code> หนึ่งแถวต่อคนต่อรอบ นักศึกษาที่ตอบไปแล้วจะเห็นป้าย “ชม.เปลี่ยน” และต้องตอบใหม่</td></tr><tr><td class="k">เปลี่ยนภาคเรียน</td><td>แก้ <code>TERM</code> ในแท็บ <code>Config</code> วางข้อมูลใหม่ในแท็บ <code>import_TA</code> แล้วรัน <code>importHours()</code> ข้อมูลภาคเก่าไม่ถูกแตะ</td></tr><tr><td class="k">ดูประวัติคำตอบ</td><td>แท็บ <code>Response</code> (เพิ่มต่อท้ายอย่างเดียว แถวล่าสุดของแต่ละคนคือสถานะปัจจุบัน) และ <code>Ack</code> (ใครรับทราบเมื่อใด)</td></tr><tr><td class="k">ปรับอายุรหัสและจำนวนครั้งที่กรอกผิดได้</td><td><code>OTP_TTL_MIN</code> (10) · <code>OTP_MAX_TRIES</code> (5) · <code>OTP_RESEND_SEC</code> (60) ในแท็บ <code>Config</code></td></tr><tr><td class="k">เปลี่ยนชื่อผู้ส่งหรือที่อยู่ที่ใช้ส่ง</td><td><code>MAIL_SENDER_NAME</code> · <code>MAIL_FROM</code> · <code>MAIL_REPLY_TO</code> (เว้นว่าง <code>MAIL_FROM</code> = ส่งจากบัญชีเจ้าของสคริปต์)</td></tr></tbody></table>
+<p>ถ้าค่าภาคเรียนในชีตถูกแปลงเป็นวันที่ (Google Sheets ทำเช่นนี้กับ “1/2569”) ระบบอ่านกลับเป็น “1/2569” ให้เสมอ และ <code>setup()</code> ซ่อมค่าที่ถูกแปลงแล้ว</p>
+
+<h3 class="step" id="u2"><span class="stepno">2</span>ก่อนเปิดให้ TA ใช้</h3>
+<ol class="check">
+  <li><b>ที่อยู่ผู้ส่ง</b> <code>polsci.ecwp@gmail.com</code> ต้องถูกเพิ่มและยืนยันแล้วเป็น “Send mail as” ใน Gmail ของเจ้าของสคริปต์ (Settings ▸ Accounts) ถ้ายังไม่พร้อม ระบบยังส่งได้ แต่จากบัญชีเจ้าของสคริปต์</li>
+  <li>รัน <code>authorizeMailSend()</code> หนึ่งครั้งในตัวแก้ไข Apps Script อนุญาตสิทธิ์ Gmail แล้วอ่าน log ว่าขึ้น “Alias OK” และตรวจอีเมลทดสอบที่ได้รับ</li>
+  <li>ตั้งค่า Web app: Execute as <b>Me</b> · Who has access <b>Anyone</b> เมื่ออัปเดตโค้ดให้ Deploy ▸ Manage deployments ▸ แก้ไขการ deploy เดิมเป็นเวอร์ชันใหม่ เพื่อให้ลิงก์เดิมใช้ได้</li>
+  <li>ทดลองด้วยบัญชีทดสอบบนมือถือ: ขอ OTP · กรอกรหัสผิด · ส่งรหัสใหม่ · ยืนยัน · รายงาน · อีเมลแจ้งเตือนถึงเจ้าหน้าที่ · รับทราบ</li>
+  <li>ตรวจว่า <code>TERM</code> ถูกต้อง รายชื่อในแท็บ <code>Staff</code> ครบ และนักศึกษาทุกคนมีอีเมลในแท็บ <code>Student</code> (log ของ <code>importRoster()</code> บอกว่าใครไม่มีอีเมล)</li>
+  <li><b>ลบแท็บ <code>studentnow</code></b> หลังนำเข้าอีเมล เพราะมีข้อมูลส่วนบุคคล</li>
+</ol>
+<div class="note warn"><b>โควตาอีเมลต่อวัน</b> อีเมลทุกฉบับ (ทั้ง OTP และแจ้งเตือน) นับรวมกันในบัญชีของเจ้าของสคริปต์ บัญชี Gmail ทั่วไปส่งได้ราว 100 ฉบับต่อวัน บัญชี Workspace ราว 1,500 ฉบับ ถ้าเหลือน้อยกว่า 2 ระบบจะแจ้งนักศึกษาว่าเต็มโควตา หากมี TA จำนวนมากให้ใช้บัญชี Workspace</div>
+</body></html>

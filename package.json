@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "push": "clasp push",
-    "deploy": "clasp push && clasp deploy --description \"ta-hours-check\""
+    "deploy": "clasp push && clasp deploy --description \"ta-hours-check\"",
+    "manual": "node docs/manual-v2/shoot.mjs && node docs/manual-v2/build.mjs"
   },
   "devDependencies": {
     "@google/clasp": "^3.0.0"
